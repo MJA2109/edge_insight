@@ -21,7 +21,6 @@ class colours():
     gray = '\033[0;37m'
 
 
-bug_string = "DEBUG >>>>>>>>>>>>>>>>>>>>>>>>>>>"
 bug = colours.fail + bug_string + colours.endc
 DIV = "-----------------------------------------------"
 
@@ -35,26 +34,20 @@ def gsearch(path, re_pattern, filter="", index=0):
         if pattern.search(line):
             if filter:
                 vals = re.split(filter, line.strip())
-                # DEBUG
-                # print(vals)
                 return vals[index]
             else:
-                # DEBUG
-                # print(line)
                 return line.strip("\n")
 
 
 def get_oldest_timestamp(log):
     match = ""
     var_log = os.listdir(AB_PATH + "/var/log/")
-    # print(var_log)
     sys_log_files = []
     oldest_timestamp = "9999-99-99T99:99:99"
     for log_file in var_log:
         if re.match("^syslog", log_file):
             sys_log_files.append(log_file)
 
-    # loop over files and get oldest syslog file
     for sys_log in sys_log_files:
         if ".gz" in sys_log:
             with gzip.open(AB_PATH + "/var/log/" + sys_log, "rb") as d_syslog:
@@ -65,7 +58,6 @@ def get_oldest_timestamp(log):
                     except:
                         pass
 
-                    # print("debug match" + match)
                     if match and match < oldest_timestamp:
                         oldest_timestamp = match
                         print("DEBUG oldest_timestamp" + oldest_timestamp)
@@ -162,7 +154,6 @@ def sort_logical_routers(debug, logical_routers, logical_topology):
 
     if debug:
         print(sorted_routers)
-        print(type(sorted_routers))
 
     return sorted_routers
 
@@ -205,7 +196,6 @@ def get_logical_routers(debug):
                     routers.append(temp)
                     if debug:
                         print(routers)
-                        print(type(routers))
 
                     return routers
 
@@ -228,7 +218,6 @@ def get_topology(debug):
 
     if debug:
         print(topology)
-        print(type(lb))
 
     return topology
 
@@ -256,7 +245,6 @@ def get_lbs(debug):
                                  "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"], "Tot Ses": vip["total_sess"], "UUID": vip["uuid"]})
     if debug:
         print(local_lb)
-        print(type(local_lb))
 
     return local_lb
 
@@ -310,6 +298,5 @@ if __name__ == "__main__":
                   "===> Invalid flag. Please try again..." + colours.endc)
 
     else:
-        # print(sys.argv)
         print(colours.warning +
               "===> Please provide log bundle and flag as arguments." + colours.endc)
