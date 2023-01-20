@@ -8,6 +8,7 @@ import gzip
 import shutil
 import json
 import logging
+import argparse
 
 
 class colours():
@@ -257,51 +258,36 @@ def format(lists):
 
 
 def main():
-
-    if len(sys.argv) == 3 and "nsx_edge" in sys.argv[1]:
         
-        global BUNDLE
-        global AB_PATH
+    global BUNDLE
+    global AB_PATH
 
-        """
-        try:
-            file = tarfile.open(sys.argv[1])
-            file.extractall()
-            file.close()
-        except:
-            print(colours.warning + "===> Unable to unpack Edge bundle" + colours.endc)
-            exit(1)
-        """
-        BUNDLE = sys.argv[1].strip(".tgz")
-        os.chdir(BUNDLE)
-        AB_PATH = os.getcwd()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("edge_bundle", type=str, help="NSX-T Edge Log Bundle")
+    parser.add_argument("-s", "--summary", help="returns config summary", action="store_true")
+    parser.add_argument("-r", "--router", help="returns a list of logical routers", action="store_true")
+    parser.add_argument("-l", "--load-balancer", help="returns a list of load balancers", action="store_true")
+    parser.add_argument("-f", "--firewall", help="returns a firewall config", action="store_true")
+    parsed_args = parser.parse_args()
+    args = vars(parsed_args)
+    print(args)
 
-        if sys.argv[2] == "-r" or sys.argv[2] == "--router":
-            r = get_logical_routers(False)
-            t = get_topology(False)
-            rt = sort_logical_routers(False, r, t)
-            format(rt)
-        elif sys.argv[2] == "-lb" or sys.argv[2] == "--loadbalancer":
-            lbs = get_lbs(debug=False)
-            format(lbs)
-        elif sys.argv[2] == "-s" or sys.argv[2] == "--summary":
-            get_edge_summary()
-        elif sys.argv[2] == "-h" or sys.argv[2] == "--help":
-            print("")
-            print("Options:")
-            print("Returns a summary of Edge configuration: -s | --summary")
-            print("Returns a list of Logical Routers: -r | --routers")
-            print(
-                "Returns a list of Load Balacers and assocated Virtual Servers: -b | --load-balancers")
-            print("")
+    AB_PATH = os.getcwd()
+    BUNDLE = args["edge_bundle"]
+    
 
-        else:
-            print(colours.warning +
-                  "===> Invalid flag. Please try again..." + colours.endc)
+    BUNDLE = sys.argv[1].strip(".tgz")
+    os.chdir(BUNDLE)
 
-    else:
-        print(colours.warning +
-              "===> Please provide log bundle and flag as arguments." + colours.endc)
+    """
+    try:
+        file = tarfile.open(sys.argv[1])
+        file.extractall()
+        file.close()
+    except:
+        print(colours.warning + "===> Unable to unpack Edge bundle" + colours.endc)
+        exit(1)
+    """
 
 
 if __name__ == "__main__":
