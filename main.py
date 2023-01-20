@@ -21,7 +21,6 @@ class colours():
     gray = '\033[0;37m'
 
 
-bug = colours.fail + bug_string + colours.endc
 DIV = "-----------------------------------------------"
 
 logging.basicConfig(level=logging.DEBUG, filename="ei.log", filemode="a",
@@ -257,9 +256,12 @@ def format(lists):
             print("{:10}: {}".format(key, component[key]))
 
 
-if __name__ == "__main__":
+def main():
 
     if len(sys.argv) == 3 and "nsx_edge" in sys.argv[1]:
+        
+        global BUNDLE
+        global AB_PATH
 
         """
         try:
@@ -300,3 +302,9 @@ if __name__ == "__main__":
     else:
         print(colours.warning +
               "===> Please provide log bundle and flag as arguments." + colours.endc)
+
+
+if __name__ == "__main__":
+    main()
+
+    
