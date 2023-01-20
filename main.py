@@ -279,6 +279,8 @@ def main():
     BUNDLE = sys.argv[1].strip(".tgz")
     os.chdir(BUNDLE)
 
+
+    #add redirection test
     """
     try:
         file = tarfile.open(sys.argv[1])
