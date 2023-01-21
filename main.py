@@ -142,7 +142,7 @@ def get_edge_summary():
     print(json.dumps(edge_summary, indent=4))
 
 
-def sort_logical_routers(debug, logical_routers, logical_topology):
+def sort_logical_routers(logical_routers, logical_topology):
 
     sorted_routers = list()
 
@@ -152,13 +152,10 @@ def sort_logical_routers(debug, logical_routers, logical_topology):
             if str(short_id[1]) in str(router["UUID"]):
                 sorted_routers.append(router)
 
-    if debug:
-        print(sorted_routers)
-
     return sorted_routers
 
 
-def get_logical_routers(debug):
+def get_logical_routers():
 
     FILE_1 = "/edge/logical-routers"
 
@@ -168,7 +165,7 @@ def get_logical_routers(debug):
             routers = list()
             temp = dict()
             ipv6 = re.compile("f")
-            top = get_topology(False)
+            top = get_topology()
 
             for lr in range(len(lr_json)):
 
@@ -194,8 +191,6 @@ def get_logical_routers(debug):
                             temp["ws"] = d["ws"]
 
                     routers.append(temp)
-                    if debug:
-                        print(routers)
 
                     return routers
 
@@ -204,7 +199,12 @@ def get_logical_routers(debug):
                   "Unable to process data from {}".format(FILE_1) + colours.endc)
 
 
-def get_topology(debug):
+def get_fw():
+    print("firewall config goes here...")
+
+
+
+def get_topology():
 
     topology = list()
 
@@ -216,9 +216,6 @@ def get_topology(debug):
                 ws = get_leading_ws(line)
                 topology.append({'uuid': uuid.group(), 'ws': ws})
 
-    if debug:
-        print(topology)
-
     return topology
 
 
@@ -228,7 +225,7 @@ def get_leading_ws(line_arg):
     return leading_ws
 
 
-def get_lbs(debug):
+def get_lbs():
 
     local_lb = []
 
@@ -243,8 +240,6 @@ def get_lbs(debug):
 
                 local_lb.append({"Name": vip["display_name"], "IP": vip["ip_address"], "Port": vip["port"], "Proto": vip["ip_protocol"],
                                  "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"], "Tot Ses": vip["total_sess"], "UUID": vip["uuid"]})
-    if debug:
-        print(local_lb)
 
     return local_lb
 
@@ -270,17 +265,24 @@ def main():
     parser.add_argument("-f", "--firewall", help="returns a firewall config", action="store_true")
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
-    print(args)
-
-    AB_PATH = os.getcwd()
     BUNDLE = args["edge_bundle"]
     
+    try:
+        os.chdir(BUNDLE)
+        AB_PATH = os.getcwd()
+    except os.error as err:
+        print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
-    BUNDLE = sys.argv[1].strip(".tgz")
-    os.chdir(BUNDLE)
+    if args["summary"]:
+        get_edge_summary()
+    elif args["router"]:
+        format(get_logical_routers())
+    elif args["load_balancer"]:
+        format(get_lbs())
+    elif args["firewall"]:
+        get_fw()
 
 
-    #add redirection test
     """
     try:
         file = tarfile.open(sys.argv[1])
