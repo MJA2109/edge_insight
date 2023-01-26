@@ -199,50 +199,30 @@ def get_logical_routers():
                   "Unable to process data from {}".format(FILE_1) + colours.endc)
 
 def clean_input(line):
-
+    print(line)
     l = line.split(":")
-    s = str(l[1])
+    s = str(l)
     c = s.replace('"', '')
-    return c
+    return s
 
 
 def get_fw():
 
     FILE_1 = "/edge/fw-connections"
-
     fw_jdata = []
+
 
     fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
 
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
         fw_tdata = lfile.read()
-       
-        # fw-connections not in json format so will split and push relevant data to json object
-        fw_sdata = fw_tdata.split(",")
-        for line in fw_sdata:
-            if '"uuid"' in line:
-                print(clean_input(line))
+        sections = fw_tdata.split('"uuid"')
+        print(len(sections))
+        #parse each section between uuid and l2-tracking-flag
+        #fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
+                        
 
-            if "connection-count" in line:
-                print(clean_input(line))
-                
-            if "TCP Half" in line:
-                print(clean_input(line))
-                
-            if "UDP Active" in line:
-                print(clean_input(line))
-                
-            if "ICMP Active" in line:
-                print(clean_input(line))
-                
-            if "NAT Active" in line:
-                print(clean_input(line))
-                
-            if "Other Active" in line:
-                print(clean_input(line))
-                
-        
-    #print("firewall config goes here...")
+    print("firewall config goes here...")
 
 
 
