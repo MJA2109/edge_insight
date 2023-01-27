@@ -96,6 +96,8 @@ def get_edge_summary():
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_1)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
 
     with open(AB_PATH + FILE_2, "r", encoding="UTF-8") as jfile:
         try:
@@ -106,6 +108,9 @@ def get_edge_summary():
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_2)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
+            
 
     with open(AB_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
         try:
@@ -114,6 +119,8 @@ def get_edge_summary():
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_3)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
 
     with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
         try:
@@ -124,6 +131,8 @@ def get_edge_summary():
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_4)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
 
     with open(AB_PATH + FILE_5, "r", encoding="UTF-8") as jfile:
         try:
@@ -138,6 +147,8 @@ def get_edge_summary():
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_5)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
 
     print(json.dumps(edge_summary, indent=4))
 
