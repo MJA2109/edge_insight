@@ -216,15 +216,15 @@ def get_fw():
 
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
         fw_tdata = lfile.read()
-        sections = fw_tdata.split('"uuid"')
-        print(len(sections))
-        #parse each section between uuid and l2-tracking-flag
         #fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
-                        
+        fw_sections = re.findall('({"uuid":)((.|\n)+?)("l2-tracking-flag")(:false})', fw_tdata)
 
-    print("firewall config goes here...")
+        for fw_section in fw_sections:
+            print(fw_section)
+            print(DIV, "\n")
+        
 
-
+                       
 
 def get_topology():
 
