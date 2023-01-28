@@ -203,7 +203,9 @@ def get_logical_routers():
 
                     routers.append(temp)
 
-                    return routers
+            sortd = sort_logical_routers(routers, get_topology())
+
+            return sortd
 
         except json.decoder.JSONDecodeError:
             print(colours.warning +
@@ -228,8 +230,9 @@ def get_fw():
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
         fw_tdata = lfile.read()
         #fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
-        fw_sections = re.findall('({"uuid":)((.|\n)+?)("l2-tracking-flag")(:false})', fw_tdata)
-
+        fw_sections = re.findall('({"uuid)((.|\n)+?)(}])', fw_tdata)
+        print("test")
+        print(len(fw_sections))
         for fw_section in fw_sections:
             print(fw_section)
             print(DIV, "\n")
