@@ -150,8 +150,9 @@ def get_edge_summary():
         except KeyError as e:
             edge_summary["errors"].append(str(e))
 
-    #print(json.dumps(edge_summary, indent=4))
+    print(json.dumps(edge_summary, indent=4))
     return edge_summary
+    
 
 
 def sort_logical_routers(logical_routers, logical_topology):
@@ -288,19 +289,6 @@ def format_list(lists):
         for key in component:
             print("{:10}: {}".format(key, component[key]))
 
-def format_dicts(dicts):
-
-    for key, val in dicts.items():
-
-        if key == "interfaces":
-            for interfaces in val:
-                print(type(interfaces))
-                for x, y in interfaces.iteams(): 
-                    print(x, y)   
-        else:
-            print("{:20}: {}".format(key, val))
-
-
 
 def main():
         
@@ -324,7 +312,7 @@ def main():
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
     if args["summary"]:
-        format_dicts(get_edge_summary())
+        get_edge_summary()
     elif args["router"]:
         format_list(get_logical_routers())
     elif args["load_balancer"]:
