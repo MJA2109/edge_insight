@@ -82,7 +82,7 @@ def get_edge_summary():
             for config in node_config:
                 if config == "/api/v1/node":
                     edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
-                                         "version": node_config[config]["node_version"], "kernel_version": node_config[config]["kernel_version"],
+                                         "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
                                          "date": node_config[config]["system_datetime"]})
 
                 if config == "/api/v1/node/network/interfaces":
@@ -125,9 +125,9 @@ def get_edge_summary():
     with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
-            edge_summary.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "highest_dp_core_usage": config["highest_cpu_core_usage_dpdk"],
-                                 "highest_service_core_usage": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core_usage": config["avg_cpu_core_usage_dpdk"],
-                                 "avg_service_core_usage": config["avg_cpu_core_usage_non_dpdk"]})
+            edge_summary.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
+                                 "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
+                                 "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_4)
@@ -150,7 +150,7 @@ def get_edge_summary():
         except KeyError as e:
             edge_summary["errors"].append(str(e))
 
-    print(json.dumps(edge_summary, indent=4))
+    #print(json.dumps(edge_summary, indent=4))
     return edge_summary
     
 
@@ -290,6 +290,24 @@ def format_list(lists):
             print("{:10}: {}".format(key, component[key]))
 
 
+def format_dict(dicts):
+
+    for key, val in dicts.items():
+
+        if key == "interfaces":
+            print("{:18}:".format(key))
+            for interface in val:
+                print("{:>19} {}".format(":", str(interface)))
+                 
+        elif key == "tunnels":
+            print("{:18}:".format(key))
+            for tunnel in val:
+                print("{:>19} {}".format(":", str(tunnel))) 
+        else:
+            print("{:18}: {}".format(key, val))
+
+
+
 def main():
         
     global BUNDLE
@@ -312,7 +330,7 @@ def main():
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
     if args["summary"]:
-        get_edge_summary()
+        format_dict(get_edge_summary())
     elif args["router"]:
         format_list(get_logical_routers())
     elif args["load_balancer"]:
