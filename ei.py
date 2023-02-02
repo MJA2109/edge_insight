@@ -73,6 +73,7 @@ def get_edge_summary():
     FILE_3 = "/edge/flowcache-config"
     FILE_4 = "/var/run/vmware/edge/cpu_usage.json"
     FILE_5 = "/edge/tunnel-ports-stat"
+    FILE_6 = "/etc/network/interfaces"
 
     edge_summary = {"errors": []}
 
@@ -84,21 +85,43 @@ def get_edge_summary():
                     edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
                                          "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
                                          "date": node_config[config]["system_datetime"]})
-
+                """
                 if config == "/api/v1/node/network/interfaces":
                     edge_summary.update({"interfaces": []})
                     for interface in node_config[config]["results"]:
                         edge_summary["interfaces"].append({"interface": interface["interface_id"], "admin_status": interface["admin_status"],
                                                            "link_status": interface["link_status"], "ip_addresses": interface["ip_addresses"]})
-                if config == "/api/v1/node/network/name-servers":
-                    edge_summary.update(
-                        {"dns": node_config[config]["name_servers"]})
+                """
 
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_1)
         except KeyError as e:
             edge_summary["errors"].append(str(e))
 
+
+    with open(AB_PATH + FILE_6, "r", encoding="UTF-8"):
+        try:
+            addr = gsearch(AB_PATH + FILE_6, "address", "address ", 1)
+            mask = gsearch(AB_PATH + FILE_6, "netmask", "netmask ", 1)
+            gw = gsearch(AB_PATH + FILE_6, "gateway", "gateway ", 1)
+            edge_summary.update({"mgmt": addr, "netmask": mask, "gateway": gw})
+
+        except Exception as e:
+            edge_summary["errors"].append(str(e))
+
+
+    with open(AB_PATH + FILE_1, "r", encoding="UTF-8") as jfile:
+        try:
+            node_config = json.load(jfile)
+            for config in node_config:
+                if config == "/api/v1/node/network/name-servers":
+                    edge_summary.update({"dns": node_config[config]["name_servers"]})
+        except json.decoder.JSONDecodeError:
+            edge_summary["errors"].append(FILE_1)
+        except KeyError as e:
+            edge_summary["errors"].append(str(e))
+
+        
     with open(AB_PATH + FILE_2, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
@@ -149,6 +172,7 @@ def get_edge_summary():
             edge_summary["errors"].append(FILE_5)
         except KeyError as e:
             edge_summary["errors"].append(str(e))
+
 
     #print(json.dumps(edge_summary, indent=4))
     return edge_summary
@@ -305,7 +329,6 @@ def format_dict(dicts):
                 print("{:>19} {}".format(":", str(tunnel))) 
         else:
             print("{:18}: {}".format(key, val))
-
 
 
 def main():
