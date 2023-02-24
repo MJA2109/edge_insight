@@ -85,14 +85,6 @@ def get_edge_summary():
                     edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
                                          "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
                                          "date": node_config[config]["system_datetime"]})
-                """
-                if config == "/api/v1/node/network/interfaces":
-                    edge_summary.update({"interfaces": []})
-                    for interface in node_config[config]["results"]:
-                        edge_summary["interfaces"].append({"interface": interface["interface_id"], "admin_status": interface["admin_status"],
-                                                           "link_status": interface["link_status"], "ip_addresses": interface["ip_addresses"]})
-                """
-
         except json.decoder.JSONDecodeError:
             edge_summary["errors"].append(FILE_1)
         except KeyError as e:
@@ -173,8 +165,6 @@ def get_edge_summary():
         except KeyError as e:
             edge_summary["errors"].append(str(e))
 
-
-    #print(json.dumps(edge_summary, indent=4))
     return edge_summary
     
 
