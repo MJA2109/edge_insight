@@ -238,23 +238,15 @@ def clean_input(line):
 def get_fw():
 
     FILE_1 = "/edge/fw-connections"
-    fw_jdata = []
-
-
-    fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
 
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
         fw_tdata = lfile.read()
-        #fw_jdata.append({"lr_uuid":"", "conn_count": "", "tcp_half_open_max": "", "udp_act_max": "", "icmp_act_max": "", "other_act_max": "", "nat_act_max": ""})
         fw_sections = re.findall('({"uuid)((.|\n)+?)(}])', fw_tdata)
-        print("test")
-        print(len(fw_sections))
         for fw_section in fw_sections:
-            print(fw_section)
+            #fw_sections is a list of tuples
+            print(fw_section)            
             print(DIV, "\n")
-        
-
-                       
+                           
 
 def get_topology():
 
