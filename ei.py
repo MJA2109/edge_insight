@@ -1,4 +1,4 @@
-#!/usr/bin/python3 
+#!/usr/bin python3 
 
 import os
 import sys
@@ -238,15 +238,28 @@ def clean_input(line):
 def get_fw():
 
     FILE_1 = "/edge/fw-connections"
+    templist = []
+    fwlist = []
 
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
-        fw_tdata = lfile.read()
-        fw_sections = re.findall('({"uuid)((.|\n)+?)(}])', fw_tdata)
-        for fw_section in fw_sections:
-            #fw_sections is a list of tuples
-            print(fw_section)            
-            print(DIV, "\n")
-                           
+        for line in lfile:
+            if '"uuid"' in line:
+                templist.append(line.split('",'))
+
+        for fw in templist:
+
+            fwlist.append(fw[3])
+            fwlist.append(fw[4])
+            fwlist.append(fw[5])
+            fwlist.append(fw[7])
+            fwlist.append(fw[8])
+            fwlist.append(fw[9])
+            fwlist.append(fw[10])  
+
+        for t in fwlist:
+            print(t)
+
+        return fwlist     
 
 def get_topology():
 
