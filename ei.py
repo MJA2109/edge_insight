@@ -1,4 +1,4 @@
-#!/usr/bin python3 
+#!/usr/bin/python3 
 
 import os
 import sys
@@ -9,6 +9,8 @@ import shutil
 import json
 import logging
 import argparse
+from ast import literal_eval
+
 
 
 class colours():
@@ -235,31 +237,25 @@ def clean_input(line):
     return s
 
 
-def get_fw():
+def get_fw_stats():
 
-    FILE_1 = "/edge/fw-connections"
-    templist = []
-    fwlist = []
-
+    FILE_1 = "/edge/fw-total-stats"
+    fw_dict = {}
+    fw_list = []
+    
     with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
-        for line in lfile:
-            if '"uuid"' in line:
-                templist.append(line.split('",'))
 
-        for fw in templist:
+        temp_list = literal_eval(lfile.read().strip())
+        
+        for section in temp_list:
 
-            fwlist.append(fw[3])
-            fwlist.append(fw[4])
-            fwlist.append(fw[5])
-            fwlist.append(fw[7])
-            fwlist.append(fw[8])
-            fwlist.append(fw[9])
-            fwlist.append(fw[10])  
+            fw_dict.update({"uuid": section["uuid"], "name": section["name"], "type": section["type"], "connection-count": section["connection-count"],
+                           "tcp_ho_active_max": section["TCP Half Opened Active/Max"], "udp_active_max": section["UDP Active/Max"], "icmp_active_max": section["ICMP Active/Max"],
+                           "other_active_max": section["Other Active/Max"], "nat_active_max": section["NAT Active/Max"]})
+            
+            fw_list.append(fw_dict)
 
-        for t in fwlist:
-            print(t)
-
-        return fwlist     
+        return fw_list  
 
 def get_topology():
 
@@ -306,7 +302,7 @@ def format_list(lists):
     for component in lists:
         print(DIV)
         for key in component:
-            print("{:10}: {}".format(key, component[key]))
+            print("{:18}: {}".format(key, component[key]))
 
 
 def format_dict(dicts):
@@ -314,7 +310,7 @@ def format_dict(dicts):
     for key, val in dicts.items():
 
         if key == "interfaces":
-            print("{:18}:".format(key))
+            print("{:16}:".format(key))
             for interface in val:
                 print("{:>19} {}".format(":", str(interface)))
                  
@@ -336,7 +332,7 @@ def main():
     parser.add_argument("-s", "--summary", help="returns config summary", action="store_true")
     parser.add_argument("-r", "--router", help="returns a list of logical routers", action="store_true")
     parser.add_argument("-l", "--load-balancer", help="returns a list of load balancers", action="store_true")
-    parser.add_argument("-f", "--firewall", help="returns a firewall config", action="store_true")
+    parser.add_argument("-f", "--firewall", help="returns connection stats", action="store_true")
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
     BUNDLE = args["edge_bundle"]
@@ -354,7 +350,7 @@ def main():
     elif args["load_balancer"]:
         format_list(get_lbs())
     elif args["firewall"]:
-        get_fw()
+        format_list(get_fw_stats())
 
 
     """
