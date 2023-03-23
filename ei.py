@@ -76,6 +76,8 @@ def get_edge_summary():
     FILE_4 = "/var/run/vmware/edge/cpu_usage.json"
     FILE_5 = "/edge/tunnel-ports-stat"
     FILE_6 = "/etc/network/interfaces"
+    FILE_7 = "/proc/meminfo"
+    KB = 1048576
 
     edge_summary = {"errors": []}
 
@@ -114,6 +116,14 @@ def get_edge_summary():
             edge_summary["errors"].append(FILE_1)
         except KeyError as e:
             edge_summary["errors"].append(str(e))
+
+
+    with open(AB_PATH + FILE_7, "r", encoding="UTF-8") as tfile:
+     
+        total_mem = gsearch(AB_PATH + FILE_7, "MemTotal", ":", index=1)
+        total = int(total_mem.strip("kB")) // KB + 1
+
+        edge_summary.update({"memory(GB)": total})
 
         
     with open(AB_PATH + FILE_2, "r", encoding="UTF-8") as jfile:
@@ -166,6 +176,7 @@ def get_edge_summary():
             edge_summary["errors"].append(FILE_5)
         except KeyError as e:
             edge_summary["errors"].append(str(e))
+
 
     return edge_summary
     
