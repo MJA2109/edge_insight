@@ -303,7 +303,8 @@ def get_lbs():
             for vip in lb["virtual_servers"]:
 
                 local_lb.append({"Name": vip["display_name"], "IP": vip["ip_address"], "Port": vip["port"], "Proto": vip["ip_protocol"],
-                                 "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"], "Tot Ses": vip["total_sess"], "UUID": vip["uuid"]})
+                                 "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"], "Tot Ses": vip["total_sess"], 
+                                 "Req Rate": vip["req_rate"], "Ses Rate": vip["sess_rate"], "UUID": vip["uuid"]})
 
     return local_lb
 
