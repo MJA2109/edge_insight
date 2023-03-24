@@ -79,7 +79,8 @@ def get_edge_summary():
     FILE_7 = "/proc/meminfo"
     KB = 1048576
 
-    edge_summary = {"errors": []}
+    errors = []
+    edge_summary = {}
 
     with open(AB_PATH + FILE_1, "r", encoding="UTF-8") as jfile:
         try:
@@ -90,9 +91,10 @@ def get_edge_summary():
                                          "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
                                          "date": node_config[config]["system_datetime"]})
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_1)
+            errors.append(FILE_1)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
+
 
 
     with open(AB_PATH + FILE_6, "r", encoding="UTF-8"):
@@ -103,7 +105,7 @@ def get_edge_summary():
             edge_summary.update({"mgmt": addr, "netmask": mask, "gateway": gw})
 
         except Exception as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
 
 
     with open(AB_PATH + FILE_1, "r", encoding="UTF-8") as jfile:
@@ -113,9 +115,9 @@ def get_edge_summary():
                 if config == "/api/v1/node/network/name-servers":
                     edge_summary.update({"dns": node_config[config]["name_servers"]})
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_1)
+            errors.append(FILE_1)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
 
 
     with open(AB_PATH + FILE_7, "r", encoding="UTF-8") as tfile:
@@ -134,9 +136,9 @@ def get_edge_summary():
             edge_summary.update({"size": config["vm_form_factor"]})
 
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_2)
+            errors.append(FILE_2)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
             
 
     with open(AB_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
@@ -145,10 +147,11 @@ def get_edge_summary():
             edge_summary.update({"flow_cache": config["enabled"]})
 
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_3)
+            errors.append(FILE_3)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
 
+    
     with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
@@ -157,9 +160,10 @@ def get_edge_summary():
                                  "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
 
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_4)
+            errors.append(FILE_4)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
+
 
     with open(AB_PATH + FILE_5, "r", encoding="UTF-8") as jfile:
         try:
@@ -173,11 +177,11 @@ def get_edge_summary():
                     {"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
 
         except json.decoder.JSONDecodeError:
-            edge_summary["errors"].append(FILE_5)
+            errors.append(FILE_5)
         except KeyError as e:
-            edge_summary["errors"].append(str(e))
+            errors.append(str(e))
 
-
+    edge_summary["errors"] = errors
     return edge_summary
     
 
