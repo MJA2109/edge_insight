@@ -77,6 +77,7 @@ def get_edge_summary():
     FILE_5 = "/edge/tunnel-ports-stat"
     FILE_6 = "/etc/network/interfaces"
     FILE_7 = "/proc/meminfo"
+    FILE_8 = "/edge/cpu_info"
     KB = 1048576
 
     errors = []
@@ -118,6 +119,11 @@ def get_edge_summary():
             errors.append(FILE_1)
         except KeyError as e:
             errors.append(str(e))
+
+    with open(AB_PATH + FILE_8, "r", encoding="UTF-8") as tfile:
+        cpus = gsearch(AB_PATH + FILE_8, "CPU\(s\)", ":", index=1) 
+        cores = gsearch(AB_PATH + FILE_8, "Core\(s\)", ":", index=1)
+        edge_summary.update({"cpus": cpus.strip(), "cores_per_socket": cores.strip() })
 
 
     with open(AB_PATH + FILE_7, "r", encoding="UTF-8") as tfile:
