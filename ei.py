@@ -72,8 +72,6 @@ def get_edge_summary():
 
     FILE_1 = "/node_config.json"
     FILE_2 = "/config/vmware/edge/config.json"
-    FILE_3 = "/edge/flowcache-config"
-    FILE_4 = "/var/run/vmware/edge/cpu_usage.json"
     FILE_5 = "/edge/tunnel-ports-stat"
     FILE_6 = "/etc/network/interfaces"
     FILE_7 = "/proc/meminfo"
@@ -145,30 +143,6 @@ def get_edge_summary():
             errors.append(FILE_2)
         except KeyError as e:
             errors.append(str(e))
-            
-
-    with open(AB_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_summary.update({"flow_cache": config["enabled"]})
-
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_3)
-        except KeyError as e:
-            errors.append(str(e))
-
-    
-    with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_summary.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
-                                 "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
-                                 "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
-
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_4)
-        except KeyError as e:
-            errors.append(str(e))
 
 
     with open(AB_PATH + FILE_5, "r", encoding="UTF-8") as jfile:
@@ -189,6 +163,47 @@ def get_edge_summary():
 
     edge_summary["errors"] = errors
     return edge_summary
+
+
+def get_edge_performance():
+
+    FILE_3 = "/edge/flowcache-config"
+    FILE_4 = "/var/run/vmware/edge/cpu_usage.json"
+    FILE_9 = "/edge/datapath-cpu-stats"
+
+    edge_perf = {}
+    
+    with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
+        try:
+            config = json.load(jfile)
+            edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
+                                 "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
+                                 "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
+
+        except json.decoder.JSONDecodeError:
+            errors.append(FILE_4)
+        except KeyError as e:
+            errors.append(str(e))
+
+    with open(AB_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
+        try:
+            config = json.load(jfile)
+            edge_perf.update({"flow_cache": config["enabled"]})
+
+        except json.decoder.JSONDecodeError:
+            errors.append(FILE_3)
+        except KeyError as e:
+            errors.append(str(e))
+
+    """
+    with open(AB_PATH + FILE_9, "r", encoding="UTF-8") as lfile:
+        temp_list = literal_eval(lfile.read().strip())
+        for t in temp_list:
+            print(t)
+    """
+
+    return edge_perf
+
     
 
 
@@ -352,6 +367,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("edge_bundle", type=str, help="NSX-T Edge Log Bundle")
     parser.add_argument("-s", "--summary", help="returns config summary", action="store_true")
+    parser.add_argument("-p", "--performance", help="returns performance info", action="store_true")
     parser.add_argument("-r", "--router", help="returns a list of logical routers", action="store_true")
     parser.add_argument("-l", "--load-balancer", help="returns a list of load balancers", action="store_true")
     parser.add_argument("-f", "--firewall", help="returns connection stats", action="store_true")
@@ -367,6 +383,8 @@ def main():
 
     if args["summary"]:
         format_dict(get_edge_summary())
+    elif args["performance"]:
+        format_dict(get_edge_performance())
     elif args["router"]:
         format_list(get_logical_routers())
     elif args["load_balancer"]:
