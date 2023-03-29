@@ -195,12 +195,13 @@ def get_edge_performance():
         except KeyError as e:
             errors.append(str(e))
 
-    """
+    
     with open(AB_PATH + FILE_9, "r", encoding="UTF-8") as lfile:
         temp_list = literal_eval(lfile.read().strip())
-        for t in temp_list:
-            print(t)
-    """
+        edge_perf.update({"cores" : []})
+        for core in temp_list:
+            edge_perf["cores"].append({"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
+    
 
     return edge_perf
 
@@ -355,6 +356,10 @@ def format_dict(dicts):
             print("{:18}:".format(key))
             for tunnel in val:
                 print("{:>19} {}".format(":", str(tunnel))) 
+        elif key == "cores":
+            print("{:18}:".format(key))
+            for core in val:
+                print("{:>19} {}".format(":", str(core))) 
         else:
             print("{:18}: {}".format(key, val))
 
