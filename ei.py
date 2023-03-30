@@ -30,12 +30,12 @@ logging.basicConfig(level=logging.DEBUG, filename="ei.log", filemode="a",
                     format="[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s", datefmt="%Y-%m-%dT%H:%M:%SZ")
 
 
-def gsearch(path, re_pattern, filter="", index=0):
+def gsearch(path, re_pattern, delimiter="", index=0):
     pattern = re.compile(re_pattern)
     for line in open(path):
         if pattern.search(line):
-            if filter:
-                vals = re.split(filter, line.strip())
+            if delimiter:
+                vals = re.split(delimiter, line.strip())
                 return vals[index]
             else:
                 return line.strip("\n")
@@ -43,7 +43,7 @@ def gsearch(path, re_pattern, filter="", index=0):
 
 def get_oldest_timestamp(log):
     match = ""
-    var_log = os.listdir(AB_PATH + "/var/log/")
+    var_log = os.listdir(BASE_PATH + "/var/log/")
     sys_log_files = []
     oldest_timestamp = "9999-99-99T99:99:99"
     for log_file in var_log:
@@ -52,7 +52,7 @@ def get_oldest_timestamp(log):
 
     for sys_log in sys_log_files:
         if ".gz" in sys_log:
-            with gzip.open(AB_PATH + "/var/log/" + sys_log, "rb") as d_syslog:
+            with gzip.open(BASE_PATH + "/var/log/" + sys_log, "rb") as d_syslog:
                 for line in reversed(d_syslog.readlines()):
                     try:
                         match = re.findall(
@@ -70,97 +70,98 @@ def get_oldest_timestamp(log):
 
 def get_edge_summary():
 
-    FILE_1 = "/node_config.json"
-    FILE_2 = "/config/vmware/edge/config.json"
-    FILE_5 = "/edge/tunnel-ports-stat"
-    FILE_6 = "/etc/network/interfaces"
-    FILE_7 = "/proc/meminfo"
-    FILE_8 = "/edge/cpu_info"
+    AB_PATH_1 = BASE_PATH + "/node_config.json"
+    AB_PATH_2 = BASE_PATH + "/config/vmware/edge/config.json"
+    AB_PATH_5 = BASE_PATH + "/edge/tunnel-ports-stat"
+    AB_PATH_6 = BASE_PATH + "/etc/network/interfaces"
+    AB_PATH_7 = BASE_PATH + "/proc/meminfo"
+    AB_PATH_8 = BASE_PATH + "/edge/cpu_info"
     KB = 1048576
 
     errors = []
     edge_summary = {}
 
-    with open(AB_PATH + FILE_1, "r", encoding="UTF-8") as jfile:
-        try:
-            node_config = json.load(jfile)
-            for config in node_config:
-                if config == "/api/v1/node":
-                    edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
-                                         "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
-                                         "date": node_config[config]["system_datetime"]})
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_1)
-        except KeyError as e:
-            errors.append(str(e))
-
-
-
-    with open(AB_PATH + FILE_6, "r", encoding="UTF-8"):
-        try:
-            addr = gsearch(AB_PATH + FILE_6, "address", "address ", 1)
-            mask = gsearch(AB_PATH + FILE_6, "netmask", "netmask ", 1)
-            gw = gsearch(AB_PATH + FILE_6, "gateway", "gateway ", 1)
-            edge_summary.update({"mgmt": addr, "netmask": mask, "gateway": gw})
-
-        except Exception as e:
-            errors.append(str(e))
-
-
-    with open(AB_PATH + FILE_1, "r", encoding="UTF-8") as jfile:
-        try:
-            node_config = json.load(jfile)
-            for config in node_config:
-                if config == "/api/v1/node/network/name-servers":
-                    edge_summary.update({"dns": node_config[config]["name_servers"]})
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_1)
-        except KeyError as e:
-            errors.append(str(e))
-
-    with open(AB_PATH + FILE_8, "r", encoding="UTF-8") as tfile:
-        cpus = gsearch(AB_PATH + FILE_8, "CPU\(s\)", ":", index=1) 
-        cores = gsearch(AB_PATH + FILE_8, "Core\(s\)", ":", index=1)
-        edge_summary.update({"cpus": cpus.strip(), "cores_per_socket": cores.strip() })
-
-
-    with open(AB_PATH + FILE_7, "r", encoding="UTF-8") as tfile:
-     
-        total_mem = gsearch(AB_PATH + FILE_7, "MemTotal", ":", index=1)
-        total = int(total_mem.strip("kB")) // KB + 1
-
-        edge_summary.update({"memory(GB)": total})
-
+    try: 
+        with open(AB_PATH_1, "r", encoding="UTF-8") as jfile:
+            try:
+                node_config = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(AB_PATH_1)
+            else:
+                for config in node_config:
+                    if config == "/api/v1/node":
+                        edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
+                                             "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
+                                             "date": node_config[config]["system_datetime"]})
+    except OSError as err:
+        errors.append(err)   
         
-    with open(AB_PATH + FILE_2, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
-            edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
-            edge_summary.update({"size": config["vm_form_factor"]})
+    try:
+        addr = gsearch(AB_PATH_6, "address", "address ", 1)
+        mask = gsearch(AB_PATH_6, "netmask", "netmask ", 1)
+        gw = gsearch(AB_PATH_6, "gateway", "gateway ", 1)
+        edge_summary.update({"mgmt": addr, "netmask": mask, "gateway": gw})
 
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_2)
-        except KeyError as e:
-            errors.append(str(e))
+    except Exception as err:
+        errors.append(str(err))
+
+    try:
+        with open(AB_PATH_1, "r", encoding="UTF-8") as jfile:
+            try:
+                node_config = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(AB_PATH_1)
+            else:
+                for config in node_config:
+                    if config == "/api/v1/node/network/name-servers":
+                        edge_summary.update({"dns": node_config[config]["name_servers"]})
+    except OSError as err:
+        errors.append(err)
+    
+
+    try:
+        cpus = gsearch(AB_PATH_8, "CPU\(s\)", ":", index=1) 
+        cores = gsearch(AB_PATH_8, "Core\(s\)", ":", index=1)
+        edge_summary.update({"cpus": cpus.strip(), "cores_per_socket": cores.strip() })
+        total_mem = gsearch(AB_PATH_7, "MemTotal", ":", index=1)
+        total = int(total_mem.strip("kB")) // KB + 1
+        edge_summary.update({"memory(GB)": total})
+    except Exception as err:
+        errors.append(str(err))
 
 
-    with open(AB_PATH + FILE_5, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_summary.update({"teps": [], "tunnels": []})
-            for tep in config:
-                if tep["local-vtep-ip"] not in edge_summary["teps"]:
-                    edge_summary["teps"].append(tep["local-vtep-ip"])
+    try: 
+        with open(AB_PATH_2, "r", encoding="UTF-8") as jfile:
+            try:
+                config = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(AB_PATH_2)
+            else:
+                edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
+                edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
+                edge_summary.update({"size": config["vm_form_factor"]})
+   
+    except Exception as err:
+        errors.append(str(err))
 
-                edge_summary["tunnels"].append(
-                    {"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
 
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_5)
-        except KeyError as e:
-            errors.append(str(e))
+    try: 
+        with open(AB_PATH_5, "r", encoding="UTF-8") as jfile:
+            try:
+                config = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(AB_PATH_5)
+            else:
+                edge_summary.update({"teps": [], "tunnels": []})
+                for tep in config:
+                    if tep["local-vtep-ip"] not in edge_summary["teps"]:
+                        edge_summary["teps"].append(tep["local-vtep-ip"])
+                    edge_summary["tunnels"].append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
 
+    except Exception as err:
+        errors.append(str(err))
+
+    
     edge_summary["errors"] = errors
     return edge_summary
 
@@ -173,7 +174,7 @@ def get_edge_performance():
 
     edge_perf = {}
     
-    with open(AB_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
+    with open(BASE_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
             edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
@@ -185,7 +186,7 @@ def get_edge_performance():
         except KeyError as e:
             errors.append(str(e))
 
-    with open(AB_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
+    with open(BASE_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
             edge_perf.update({"flow_cache": config["enabled"]})
@@ -196,7 +197,7 @@ def get_edge_performance():
             errors.append(str(e))
 
     
-    with open(AB_PATH + FILE_9, "r", encoding="UTF-8") as lfile:
+    with open(BASE_PATH + FILE_9, "r", encoding="UTF-8") as lfile:
         temp_list = literal_eval(lfile.read().strip())
         edge_perf.update({"cores" : []})
         for core in temp_list:
@@ -223,9 +224,9 @@ def sort_logical_routers(logical_routers, logical_topology):
 
 def get_logical_routers():
 
-    FILE_1 = "/edge/logical-routers"
+    AB_PATH_1 = "/edge/logical-routers"
 
-    with open(AB_PATH + FILE_1, "r", encoding='utf-8') as jfile:
+    with open(BASE_PATH + AB_PATH_1, "r", encoding='utf-8') as jfile:
         try:
             lr_json = json.load(jfile)
             routers = list()
@@ -264,7 +265,7 @@ def get_logical_routers():
 
         except json.decoder.JSONDecodeError:
             print(colours.warning +
-                  "Unable to process data from {}".format(FILE_1) + colours.endc)
+                  "Unable to process data from {}".format(AB_PATH_1) + colours.endc)
 
 def clean_input(line):
     print(line)
@@ -276,11 +277,11 @@ def clean_input(line):
 
 def get_fw_stats():
 
-    FILE_1 = "/edge/fw-total-stats"
+    AB_PATH_1 = "/edge/fw-total-stats"
     fw_dict = {}
     fw_list = []
     
-    with open(AB_PATH + FILE_1, "r", encoding="utf-8") as lfile:
+    with open(BASE_PATH + AB_PATH_1, "r", encoding="utf-8") as lfile:
 
         temp_list = literal_eval(lfile.read().strip())
         
@@ -298,7 +299,7 @@ def get_topology():
 
     topology = list()
 
-    PATH = AB_PATH + "/edge/logical_topology"
+    PATH = BASE_PATH + "/edge/logical_topology"
     with open(PATH, "r", encoding='utf-8') as file:
         for line in file:
             if "T0 " in line or "T1 " in line:
@@ -319,7 +320,7 @@ def get_lbs():
 
     local_lb = []
 
-    PATH = AB_PATH + "/edge/lb-stats"
+    PATH = BASE_PATH + "/edge/lb-stats"
 
     with open(PATH, 'r', encoding='utf-8') as jfile:
         lbs = json.load(jfile)
@@ -367,7 +368,7 @@ def format_dict(dicts):
 def main():
         
     global BUNDLE
-    global AB_PATH
+    global BASE_PATH
 
     parser = argparse.ArgumentParser()
     parser.add_argument("edge_bundle", type=str, help="NSX-T Edge Log Bundle")
@@ -382,7 +383,7 @@ def main():
     
     try:
         os.chdir(BUNDLE)
-        AB_PATH = os.getcwd()
+        BASE_PATH = os.getcwd()
     except os.error as err:
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
