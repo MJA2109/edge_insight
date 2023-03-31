@@ -101,7 +101,6 @@ def get_edge_summary():
         mask = gsearch(AB_PATH_6, "netmask", "netmask ", 1)
         gw = gsearch(AB_PATH_6, "gateway", "gateway ", 1)
         edge_summary.update({"mgmt": addr, "netmask": mask, "gateway": gw})
-
     except Exception as err:
         errors.append(str(err))
 
@@ -140,7 +139,6 @@ def get_edge_summary():
                 edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
                 edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
                 edge_summary.update({"size": config["vm_form_factor"]})
-   
     except Exception as err:
         errors.append(str(err))
 
@@ -157,7 +155,6 @@ def get_edge_summary():
                     if tep["local-vtep-ip"] not in edge_summary["teps"]:
                         edge_summary["teps"].append(tep["local-vtep-ip"])
                     edge_summary["tunnels"].append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
-
     except Exception as err:
         errors.append(str(err))
 
@@ -180,7 +177,6 @@ def get_edge_performance():
             edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
                                  "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
                                  "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
-
         except json.decoder.JSONDecodeError:
             errors.append(FILE_4)
         except KeyError as e:
@@ -190,7 +186,6 @@ def get_edge_performance():
         try:
             config = json.load(jfile)
             edge_perf.update({"flow_cache": config["enabled"]})
-
         except json.decoder.JSONDecodeError:
             errors.append(FILE_3)
         except KeyError as e:
@@ -207,8 +202,6 @@ def get_edge_performance():
     return edge_perf
 
     
-
-
 def sort_logical_routers(logical_routers, logical_topology):
 
     sorted_routers = list()
@@ -336,6 +329,27 @@ def get_lbs():
     return local_lb
 
 
+def get_ipsec_vpn():
+
+    FILE_1 = BASE_PATH + "/edge/ike-ipsec-sa"
+    ipsec = []
+
+    try:
+        with open(FILE_1, "r", encoding="UTF-8") as jfile:
+            try:
+                sas = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(FILE_1)
+            else:
+                for sa in sas["SAs"]:
+                    ipsec.append({"initiator": sa["Initiator"], "local_ip": sa["Local IP Address"], "remote_ip": sa["Remote IP Address"],
+                                  "local_traffic": sa["Local Traffic Selector"], "remote_traffic": sa["Remote Traffic Selector"] })            
+    except OSError as err:
+        errors.append(str(err))
+
+    return ipsec
+
+
 def format_list(lists):
 
     for component in lists:
@@ -377,6 +391,7 @@ def main():
     parser.add_argument("-r", "--router", help="returns a list of logical routers", action="store_true")
     parser.add_argument("-l", "--load-balancer", help="returns a list of load balancers", action="store_true")
     parser.add_argument("-f", "--firewall", help="returns connection stats", action="store_true")
+    parser.add_argument("-i", "--ipsec", help="returns ipsec configuration", action="store_true")
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
     BUNDLE = args["edge_bundle"]
@@ -397,6 +412,8 @@ def main():
         format_list(get_lbs())
     elif args["firewall"]:
         format_list(get_fw_stats())
+    elif args["ipsec"]:
+        format_list(get_ipsec_vpn())
 
 
     """
