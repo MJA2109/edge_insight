@@ -88,11 +88,14 @@ def get_edge_summary():
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_1)
             else:
-                for config in node_config:
-                    if config == "/api/v1/node":
-                        edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
-                                             "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
-                                             "date": node_config[config]["system_datetime"]})
+                try:
+                    for config in node_config:
+                        if config == "/api/v1/node":
+                            edge_summary.update({"fqdn": node_config[config]["fully_qualified_domain_name"], "uuid": node_config[config]["node_uuid"],
+                                                 "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
+                                                 "date": node_config[config]["system_datetime"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))
     except OSError as err:
         errors.append(err)   
         
@@ -111,9 +114,12 @@ def get_edge_summary():
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_1)
             else:
-                for config in node_config:
-                    if config == "/api/v1/node/network/name-servers":
-                        edge_summary.update({"dns": node_config[config]["name_servers"]})
+                try: 
+                    for config in node_config:
+                        if config == "/api/v1/node/network/name-servers":
+                            edge_summary.update({"dns": node_config[config]["name_servers"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))
     except OSError as err:
         errors.append(err)
     
@@ -136,9 +142,12 @@ def get_edge_summary():
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_2)
             else:
-                edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
-                edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
-                edge_summary.update({"size": config["vm_form_factor"]})
+                try:
+                    edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
+                    edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
+                    edge_summary.update({"size": config["vm_form_factor"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))             
     except Exception as err:
         errors.append(str(err))
 
@@ -151,10 +160,13 @@ def get_edge_summary():
                 errors.append(AB_PATH_5)
             else:
                 edge_summary.update({"teps": [], "tunnels": []})
-                for tep in config:
-                    if tep["local-vtep-ip"] not in edge_summary["teps"]:
-                        edge_summary["teps"].append(tep["local-vtep-ip"])
-                    edge_summary["tunnels"].append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
+                try:
+                    for tep in config:
+                        if tep["local-vtep-ip"] not in edge_summary["teps"]:
+                            edge_summary["teps"].append(tep["local-vtep-ip"])
+                        edge_summary["tunnels"].append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))
     except Exception as err:
         errors.append(str(err))
 
@@ -332,8 +344,10 @@ def get_lbs():
 def get_ipsec_vpn():
 
     FILE_1 = BASE_PATH + "/edge/ike-ipsec-sa"
+    FILE_2 = BASE_PATH + "/edge/vpn-session"
     ipsec = []
 
+    """
     try:
         with open(FILE_1, "r", encoding="UTF-8") as jfile:
             try:
@@ -347,7 +361,8 @@ def get_ipsec_vpn():
     except OSError as err:
         errors.append(str(err))
 
-    return ipsec
+    """
+
 
 
 def format_list(lists):
@@ -413,7 +428,7 @@ def main():
     elif args["firewall"]:
         format_list(get_fw_stats())
     elif args["ipsec"]:
-        format_list(get_ipsec_vpn())
+        get_ipsec_vpn()
 
 
     """
