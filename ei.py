@@ -76,6 +76,7 @@ def get_edge_summary():
     AB_PATH_6 = BASE_PATH + "/etc/network/interfaces"
     AB_PATH_7 = BASE_PATH + "/proc/meminfo"
     AB_PATH_8 = BASE_PATH + "/edge/cpu_info"
+    AB_PATH_9 = BASE_PATH + "/edge/node-status"
     KB = 1048576
 
     errors = []
@@ -97,8 +98,20 @@ def get_edge_summary():
                 except KeyError as err:
                     errors.append("Unable to find value:" + str(err))
     except OSError as err:
-        errors.append(err)   
-        
+        errors.append(err) 
+
+    try: 
+        with open(AB_PATH_9, "r", encoding="UTF-8") as rfile:
+            lfile = rfile.read()
+            temp_list = literal_eval(lfile)
+            for item in temp_list:
+                try:
+                    edge_summary.update({"status": item["status"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))    
+    except OSError as err:
+        errors.append(err)
+  
     try:
         addr = gsearch(AB_PATH_6, "address", "address ", 1)
         mask = gsearch(AB_PATH_6, "netmask", "netmask ", 1)
