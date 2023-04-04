@@ -165,6 +165,12 @@ def get_edge_summary():
         errors.append(str(err))
 
 
+    if not get_lbs():
+        edge_summary.update({"lb_configued": False})
+    else:
+        edge_summary.update({"lb_configued": True})
+
+
     try: 
         with open(AB_PATH_5, "r", encoding="UTF-8") as jfile:
             try:
