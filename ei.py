@@ -165,6 +165,15 @@ def get_edge_summary():
         errors.append(str(err))
 
 
+    diag_dict = get_diag()
+    
+    if "core" in diag_dict["failed"]:
+        core_dump = True
+    else:
+        core_dump = False
+   
+    edge_summary.update({"core_dump": core_dump})
+
     if not get_lbs():
         edge_summary.update({"lb_configued": False})
     else:
