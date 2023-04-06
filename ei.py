@@ -382,8 +382,30 @@ def get_ipsec_vpn():
 
     """
 
+def get_diag():
 
+    FILE_1 = BASE_PATH + "/edge/diagnosis"
+    diag = {"passed": [], "failed": [], "warning":[]}
 
+    try:
+        with open(FILE_1, "r", encoding="UTF-8") as tfile:
+
+            jfile = json.load(tfile)
+            for item in jfile["passed"]:
+                diag["passed"].append(item)
+
+            for key, val in jfile["failed"].items():
+                diag["failed"].append(val)
+
+            for item in jfile["warning"]:
+                diag["warning"].append(item)
+
+    except OSError as err:
+        errors.append(str(err))
+
+    return diag
+
+    
 def format_list(lists):
 
     for component in lists:
@@ -426,6 +448,7 @@ def main():
     parser.add_argument("-l", "--load-balancer", help="returns a list of load balancers", action="store_true")
     parser.add_argument("-f", "--firewall", help="returns connection stats", action="store_true")
     parser.add_argument("-i", "--ipsec", help="returns ipsec configuration", action="store_true")
+    parser.add_argument("-d", "--diag", help="returns health check", action="store_true")
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
     BUNDLE = args["edge_bundle"]
@@ -448,6 +471,8 @@ def main():
         format_list(get_fw_stats())
     elif args["ipsec"]:
         get_ipsec_vpn()
+    elif args["diag"]:
+        format_dict(get_diag())
 
 
     """
