@@ -179,10 +179,10 @@ def get_edge_summary():
 
     diag_dict = get_diag()
     
-    if "core" in diag_dict["failed"]:
-        core_dump = True
-    else:
+    if "core" in diag_dict["passed"]:
         core_dump = False
+    else:
+        core_dump = True
    
     edge_summary.update({"core_dump": core_dump})
 
@@ -389,7 +389,7 @@ def get_ipsec_vpn():
     FILE_2 = BASE_PATH + "/edge/vpn-session"
     ipsec = []
 
-    """
+    
     try:
         with open(FILE_1, "r", encoding="UTF-8") as jfile:
             try:
@@ -403,7 +403,7 @@ def get_ipsec_vpn():
     except OSError as err:
         errors.append(str(err))
 
-    """
+    
 
 def get_diag():
 
