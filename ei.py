@@ -77,6 +77,7 @@ def get_edge_summary():
     AB_PATH_7 = BASE_PATH + "/proc/meminfo"
     AB_PATH_8 = BASE_PATH + "/edge/cpu_info"
     AB_PATH_9 = BASE_PATH + "/edge/node-status"
+    AB_PATH_10 = BASE_PATH + "/edge/controller-connections"
     KB = 1048576
 
     errors = []
@@ -111,6 +112,17 @@ def get_edge_summary():
                     errors.append("Unable to find value:" + str(err))    
     except OSError as err:
         errors.append(err)
+
+
+    try:
+        with open(AB_PATH_10, "r", encoding="UTF-8") as controllers:
+            ctrl_string = controllers.read()
+            ctrl_string = ctrl_string.replace("true", "True").replace("false", "False")
+            ctrl_list = literal_eval(ctrl_string)
+            #will include decimal to ip convertion here at the later stage
+    except OSError as err:
+        errors.append(err)
+
   
     try:
         addr = gsearch(AB_PATH_6, "address", "address ", 1)
@@ -314,15 +326,17 @@ def get_fw_stats():
     fw_dict = {}
     fw_list = []
     
-    with open(BASE_PATH + AB_PATH_1, "r", encoding="utf-8") as lfile:
+    with open(BASE_PATH + AB_PATH_1, "r", encoding="utf-8") as fw_stats:
 
-        temp_list = literal_eval(lfile.read().strip())
+        fw_stats_str = fw_stats.read()
+        fw_stats_str = fw_stats_str.replace("true", "True").replace("false", "False")
+        fw_stats_list = literal_eval(fw_stats_str)
         
-        for section in temp_list:
+        for fw_stat in fw_stats_list:
 
-            fw_dict.update({"uuid": section["uuid"], "name": section["name"], "type": section["type"], "connection-count": section["connection-count"],
-                           "tcp_ho_active_max": section["TCP Half Opened Active/Max"], "udp_active_max": section["UDP Active/Max"], "icmp_active_max": section["ICMP Active/Max"],
-                           "other_active_max": section["Other Active/Max"], "nat_active_max": section["NAT Active/Max"]})
+            fw_dict.update({"uuid": fw_stat["uuid"], "name": fw_stat["name"], "type": fw_stat["type"], "connection-count": fw_stat["connection-count"],
+                           "tcp_ho_active_max": fw_stat["TCP Half Opened Active/Max"], "udp_active_max": fw_stat["UDP Active/Max"], "icmp_active_max": fw_stat["ICMP Active/Max"],
+                           "other_active_max": fw_stat["Other Active/Max"], "nat_active_max": fw_stat["NAT Active/Max"]})
             
             fw_list.append(fw_dict)
 
