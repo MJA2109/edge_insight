@@ -9,6 +9,8 @@ import shutil
 import json
 import logging
 import argparse
+import socket
+import struct
 from ast import literal_eval
 
 
@@ -362,6 +364,13 @@ def get_leading_ws(line_arg):
     leading_ws = len(line) - len(line.lstrip())
     return leading_ws
 
+def dec_to_ip(decimal):
+    ip = socket.inet_ntoa(struct.pack('!L', decimal))
+    return ip
+
+
+
+
 
 def get_lbs():
 
@@ -389,22 +398,36 @@ def get_ipsec_vpn():
     FILE_2 = BASE_PATH + "/edge/vpn-session"
     ipsec = []
 
-    
     try:
-        with open(FILE_1, "r", encoding="UTF-8") as jfile:
-            try:
-                sas = json.load(jfile)
-            except json.decoder.JSONDecodeError:
-                errors.append(FILE_1)
-            else:
-                for sa in sas["SAs"]:
-                    ipsec.append({"initiator": sa["Initiator"], "local_ip": sa["Local IP Address"], "remote_ip": sa["Remote IP Address"],
-                                  "local_traffic": sa["Local Traffic Selector"], "remote_traffic": sa["Remote Traffic Selector"] })            
+        with open(FILE_2, "r", encoding="UTF-8") as vpn_sessions_file:
+            vpn_sessions_str = vpn_sessions_file.read()
+            vpn_sessions_str = vpn_sessions_str.replace("true", "True").replace("false", "False")
+            vpn_sessions = literal_eval(vpn_sessions_str)
+            for vpn_session in vpn_sessions:
+                print("=====================================================================================")
+                print("UUID:               ", vpn_session["id"])
+                print("Type:               ", vpn_session["Type"])
+                print("Status:             ", vpn_session["Session_Status"])
+                print("Local Endpoint IP:  ", dec_to_ip(vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]))
+                print("Peer Endpoint IP:   ", vpn_session["Peer_Endpoint_Profile"]["Peer_Address"])
+                print("Session Down Reason:", vpn_session["Session_Down_Reason"])
+                print("-------------------------------------------------------------------------------------")
+                for policy in vpn_session["Policy"]:
+                    print("UUID:               ", policy["id"])
+                    print("Tunnel Status:      ", policy["Tunnel_Status"])
+                    print("Tunnel Down Reason: ", policy["Tunnel_Down_Reason"])
+                    
+                    for local in policy["Local"]["IP_Address"]:
+                        print("Local Tunnel IP:    ", dec_to_ip(local["ipv4"]), "/", local["prefix_length"])
+
+                    for peer in policy["Peer"]["IP_Address"]:
+                        print("Peer Tunnel IP:     ", dec_to_ip(peer["ipv4"]), "/", peer["prefix_length"])
+                    print("")
+        
     except OSError as err:
-        errors.append(str(err))
+        print(err)
 
     
-
 def get_diag():
 
     FILE_1 = BASE_PATH + "/edge/diagnosis"
