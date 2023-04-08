@@ -397,6 +397,8 @@ def get_ipsec_vpn():
     FILE_1 = BASE_PATH + "/edge/ike-ipsec-sa"
     FILE_2 = BASE_PATH + "/edge/vpn-session"
     ipsec = []
+    session = {}
+    tunnel = {"uuid": "", "tunnel_status": "", "local_subnet": "", "peer_subnet": "", "tunnel_down_reason": ""}
 
     try:
         with open(FILE_2, "r", encoding="UTF-8") as vpn_sessions_file:
@@ -404,26 +406,31 @@ def get_ipsec_vpn():
             vpn_sessions_str = vpn_sessions_str.replace("true", "True").replace("false", "False")
             vpn_sessions = literal_eval(vpn_sessions_str)
             for vpn_session in vpn_sessions:
-                print("=====================================================================================")
-                print("UUID:               ", vpn_session["id"])
-                print("Type:               ", vpn_session["Type"])
-                print("Status:             ", vpn_session["Session_Status"])
-                print("Local Endpoint IP:  ", dec_to_ip(vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]))
-                print("Peer Endpoint IP:   ", vpn_session["Peer_Endpoint_Profile"]["Peer_Address"])
-                print("Session Down Reason:", vpn_session["Session_Down_Reason"])
-                print("-------------------------------------------------------------------------------------")
+            
+                session.update({"uuid": vpn_session["id"], "type": vpn_session["Type"], "status": vpn_session["Session_Status"],  
+                              "local_endpoint_ip": dec_to_ip(vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]),
+                               "peer_endpoint_ip": vpn_session["Peer_Endpoint_Profile"]["Peer_Address"],
+                                "session_down_reason": vpn_session["Session_Down_Reason"], "tunnels": []})
+             
                 for policy in vpn_session["Policy"]:
-                    print("UUID:               ", policy["id"])
-                    print("Tunnel Status:      ", policy["Tunnel_Status"])
-                    print("Tunnel Down Reason: ", policy["Tunnel_Down_Reason"])
-                    
+                    tunnel.update({"uuid": policy["id"], "tunnel_status": policy["Tunnel_Status"]})
                     for local in policy["Local"]["IP_Address"]:
-                        print("Local Tunnel IP:    ", dec_to_ip(local["ipv4"]), "/", local["prefix_length"])
-
+                        #print(1)
+                        local_ip = dec_to_ip(local["ipv4"]) + "/" + str(local["prefix_length"])
+                        tunnel.update({"local_subnet": local_ip})
                     for peer in policy["Peer"]["IP_Address"]:
-                        print("Peer Tunnel IP:     ", dec_to_ip(peer["ipv4"]), "/", peer["prefix_length"])
-                    print("")
+                        #print(2)
+                        peer_ip = dec_to_ip(peer["ipv4"]) + "/" + str(peer["prefix_length"])
+                        tunnel.update({"peer_subnet":peer_ip})
+                    
+                    tunnel.update({"tunnel_down_reason": policy["Tunnel_Down_Reason"]})
+                    session["tunnels"].append(tunnel.copy())
+                
+                ipsec.append(session.copy())
         
+        print(json.dumps(ipsec, indent=2))
+        return ipsec
+ 
     except OSError as err:
         print(err)
 
