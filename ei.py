@@ -26,7 +26,7 @@ class colours():
     gray = '\033[0;37m'
 
 
-DIV = "-----------------------------------------------"
+DIV = "---------------------------------------------------------"
 
 logging.basicConfig(level=logging.DEBUG, filename="ei.log", filemode="a",
                     format="[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s", datefmt="%Y-%m-%dT%H:%M:%SZ")
@@ -420,7 +420,7 @@ def get_ipsec_vpn():
                                   "local_endpoint_ip": dec_to_ip(vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]),
                                    "peer_endpoint_ip": vpn_session["Peer_Endpoint_Profile"]["Peer_Address"],
                                     "session_down_reason": vpn_session["Session_Down_Reason"], "tunnels": []})
-                    print(vpn_session)
+                    #print(vpn_session)
                     for policy in vpn_session["Policy"]:
                         tunnel.update({"uuid": policy["id"], "tunnel_status": policy["Tunnel_Status"]})
                         for local in policy["Local"]["IP_Address"]:
@@ -467,12 +467,19 @@ def get_diag():
     return diag
 
     
-def format_list(lists):
+def format_list(list):
 
-    for component in lists:
-        print(DIV)
-        for key in component:
-            print("{:18}: {}".format(key, component[key]))
+    for component in list:
+
+        if "VRF" in component:
+            ws = component["ws"] 
+            print("{:{space}} {}".format("", DIV, space = ws))
+            for key in component:
+                print("{:{space}} {:14}: {}".format("", key, component[key], space = ws))
+        else:  
+            print(DIV)
+            for key in component:
+                print("{:18}: {}".format(key, component[key]))
 
 
 def format_dict(dicts):
