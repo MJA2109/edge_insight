@@ -268,7 +268,7 @@ def sort_logical_routers(logical_routers, logical_topology):
     for top in logical_topology:
         short_id = top["uuid"].split("*")
         for router in logical_routers:
-            if str(short_id[1]) in str(router["UUID"]):
+            if str(short_id[1]) in str(router["uuid"]):
                 sorted_routers.append(router)
 
     return sorted_routers
@@ -276,48 +276,56 @@ def sort_logical_routers(logical_routers, logical_topology):
 
 def get_logical_routers():
 
-    AB_PATH_1 = "/edge/logical-routers"
+    FILE = BASE_PATH + "/edge/logical-routers"
 
-    with open(BASE_PATH + AB_PATH_1, "r", encoding='utf-8') as jfile:
+    with open(FILE, "r", encoding='utf-8') as jfile:
         try:
             lr_json = json.load(jfile)
-            routers = list()
-            temp = dict()
-            ipv6 = re.compile("f")
+            routers = []
+            temp = {}
             top = get_topology()
+            ha_configs = get_ha()
+            ipv6 = re.compile("f")
 
             for lr in range(len(lr_json)):
 
                 lr = lr_json[lr]
 
                 if lr["vrf"] != 0:
+
                     if "peer_vrf" in lr:
-                        temp = {"UUID": lr["uuid"], "Name": lr["name"], "Type": lr["type"], "VRF": lr["vrf"],
-                                "Peer VRF": lr["peer_vrf"], "uplink": [], "linked": [], "backplane": [], "downlink": []}
+                        temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
+                                "ha_config" : "None", "ha_state": "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
                     else:
-                        temp = {"UUID": lr["uuid"], "Name": lr["name"], "Type": lr["type"], "VRF": lr["vrf"],
-                                "Peer VRF": "None", "uplink": [], "linked": [], "backplane": [], "downlink": []}
+                        temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
+                                "ha_config" : "None", "ha_state" : "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
+
+                    for ha in ha_configs:
+                        f_uuid = convert_uuid(temp["uuid"])
+
+                        if f_uuid == ha["uuid"]:
+                            temp.update({"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
+                    
                     for port in lr["ports"]:
                         if port["ptype"] == "downlink" or port["ptype"] == "backplane" or port["ptype"] == "uplink" or port["ptype"] == "linked":
                             for ip in port["ipns"]:
                                 if not ipv6.match(ip):
                                     temp[port["ptype"]].append(ip)
 
-                    t_uuid = temp["UUID"]
-                    f_uuid = t_uuid[0:4] + ".*" + t_uuid[-4:]
+                    f_uuid = convert_uuid(temp["uuid"])
                     for d in top:
                         if f_uuid in d.values():
                             temp["ws"] = d["ws"]
 
                     routers.append(temp)
-
-            sortd = sort_logical_routers(routers, get_topology())
-
+            
+            sortd = sort_logical_routers(routers, get_topology())  
+            
             return sortd
 
         except json.decoder.JSONDecodeError:
             print(colours.warning +
-                  "Unable to process data from {}".format(AB_PATH_1) + colours.endc)
+                  "Unable to process data from {}".format(FILE) + colours.endc)
 
 def clean_input(line):
     print(line)
@@ -326,6 +334,9 @@ def clean_input(line):
     c = s.replace('"', '')
     return s
 
+def convert_uuid(t_uuid):
+    f_uuid = t_uuid[0:4] + ".*" + t_uuid[-4:]
+    return f_uuid
 
 def get_fw_stats():
 
@@ -363,6 +374,23 @@ def get_topology():
 
     return topology
 
+def get_ha():
+
+    config = []
+    ha_config = {}
+    ha_configs = []
+    FILE = BASE_PATH + "/edge/logical_topology"
+    with open(FILE, "r", encoding="utf-8") as lines:
+        for line in lines:
+            if "SR" in line:
+                config.append(line.replace("(", "").replace(")", "").strip().split())
+        
+        for ha in config:
+            ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": ha[5], "state": ha[10]})
+            ha_configs.append(ha_config.copy())
+
+        return ha_configs
+
 
 def get_leading_ws(line_arg):
     line = line_arg.rstrip()
@@ -372,9 +400,6 @@ def get_leading_ws(line_arg):
 def dec_to_ip(decimal):
     ip = socket.inet_ntoa(struct.pack('!L', decimal))
     return ip
-
-
-
 
 
 def get_lbs():
@@ -471,8 +496,9 @@ def format_list(list):
 
     for component in list:
 
-        if "VRF" in component:
+        if "vrf" in component:
             ws = component["ws"] 
+            ws -= 3
             print("{:{space}} {}".format("", DIV, space = ws))
             for key in component:
                 print("{:{space}} {:14}: {}".format("", key, component[key], space = ws))
