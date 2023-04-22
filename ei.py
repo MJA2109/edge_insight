@@ -376,19 +376,23 @@ def get_topology():
 
 def get_ha():
 
+    ha_len = 11
     config = []
     ha_config = {}
     ha_configs = []
     FILE = BASE_PATH + "/edge/logical_topology"
+    
     with open(FILE, "r", encoding="utf-8") as lines:
         for line in lines:
             if "SR" in line:
-                config.append(line.replace("(", "").replace(")", "").strip().split())
-        
+                config.append(line.replace("(", "").replace(")", "").replace(",", "").strip().split())
         for ha in config:
-            ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": ha[5], "state": ha[10]})
+            if "A/S" in ha and len(ha) == ha_len:
+                ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": ha[5], "state": ha[10]})
+            else:
+                ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": "None", "state": ha[8]})
+        
             ha_configs.append(ha_config.copy())
-
         return ha_configs
 
 
@@ -436,8 +440,8 @@ def get_ipsec_vpn():
                 vpn_sessions_str = vpn_sessions_str.replace("true", "True").replace("false", "False")
                 vpn_sessions = literal_eval(vpn_sessions_str)
             except Exception as err:
-                print("")
-                print("No IPSEC configured on Edge.")
+                pass
+                #print("No IPSEC configured on Edge.")
             else:
                 for vpn_session in vpn_sessions:
                 
