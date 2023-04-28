@@ -178,25 +178,16 @@ def get_edge_summary():
     except Exception as err:
         errors.append(str(err))
 
-
+    
     diag_dict = get_diag()
     
     if "core" in diag_dict["passed"]:
         core_dump = False
     else:
         core_dump = True
-   
-    edge_summary.update({"core_dump": core_dump})
-
-    if not get_lbs():
-        edge_summary.update({"lb_configued": False})
-    else:
-        edge_summary.update({"lb_configued": True})
-
-    if not get_ipsec_vpn():
-        edge_summary.update({"ipsec_configured": False})
-    else:
-        edge_summary.update({"ipsec_configured": True})
+    
+    edge_summary.update(is_configured(get_lbs(), "lb_configued"))
+    edge_summary.update(is_configured(get_ipsec_vpn(), "ipsec_configured"))
 
 
     try: 
@@ -220,6 +211,15 @@ def get_edge_summary():
     
     edge_summary["errors"] = errors
     return edge_summary
+
+
+def is_configured(configured, service):
+    srv = {}
+    if not configured:
+        srv.update({service : False})
+    else:
+        srv.upate({service: True})
+    return srv
 
 
 def get_edge_performance():
