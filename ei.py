@@ -11,6 +11,9 @@ import logging
 import argparse
 import socket
 import struct
+from rich.console import Console
+from rich.table import Table
+from rich.tree import Tree
 from ast import literal_eval
 
 
@@ -571,6 +574,7 @@ def main():
         get_ipsec_vpn()
     elif args["diag"]:
         format_dict(get_diag())
+
 
 
     """
