@@ -536,6 +536,21 @@ def format_dict(dicts):
             print("{:18}: {}".format(key, val))
 
 
+def format_output(data_input):
+
+    table = Table.grid()
+    table.add_column(width=20)
+    table.add_column()
+
+    for item in data_input:
+        for key in item:
+            table.add_row(key, ":", item[key])
+        table.add_row()
+
+    console = Console()
+    console.print(table)
+
+
 def main():
         
     global BUNDLE
@@ -569,7 +584,8 @@ def main():
     elif args["load_balancer"]:
         format_list(get_lbs())
     elif args["firewall"]:
-        format_list(get_fw_stats())
+        #format_list(get_fw_stats())
+        format_output(get_fw_stats())
     elif args["ipsec"]:
         get_ipsec_vpn()
     elif args["diag"]:
