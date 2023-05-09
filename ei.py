@@ -11,9 +11,7 @@ import logging
 import argparse
 import socket
 import struct
-from rich.console import Console
-from rich.table import Table
-from rich.tree import Tree
+from format_ei import *
 from ast import literal_eval
 
 
@@ -221,7 +219,7 @@ def is_configured(configured, service):
     if not configured:
         srv.update({service : False})
     else:
-        srv.upate({service: True})
+        srv.update({service: True})
     return srv
 
 
@@ -536,20 +534,6 @@ def format_dict(dicts):
             print("{:18}: {}".format(key, val))
 
 
-def format_output(data_input):
-
-    table = Table.grid()
-    table.add_column(width=20)
-    table.add_column()
-
-    for item in data_input:
-        for key in item:
-            table.add_row(key, ":", item[key])
-        table.add_row()
-
-    console = Console()
-    console.print(table)
-
 
 def main():
         
@@ -576,20 +560,24 @@ def main():
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
     if args["summary"]:
-        format_dict(get_edge_summary())
+        #format_summary(get_edge_summary())
+        format_output(get_edge_summary(), "EDGE SUMMARY")
     elif args["performance"]:
         format_dict(get_edge_performance())
     elif args["router"]:
         format_list(get_logical_routers())
     elif args["load_balancer"]:
         format_list(get_lbs())
+        #format_output(get_lbs())
     elif args["firewall"]:
         #format_list(get_fw_stats())
-        format_output(get_fw_stats())
+        format_fw_output(get_fw_stats())
     elif args["ipsec"]:
-        get_ipsec_vpn()
+        #get_ipsec_vpn()
+        format_output(get_ipsec_vpn(), "POLICY BASED VPN")
     elif args["diag"]:
-        format_dict(get_diag())
+        #format_dict(get_diag())
+        format_output(get_diag(), "DIAGNOSTICS")
 
 
 
