@@ -170,12 +170,14 @@ def get_edge_summary():
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_2)
             else:
+                #if bare metal edge vm_form_factor attribute won't be present
                 try:
                     edge_summary.update({"size": config["vm_form_factor"]})
-                    edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
-                    edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
                 except KeyError as err:
-                    errors.append("Unable to find value:" + str(err))             
+                    errors.append("Unable to find value:" + str(err))
+
+                edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
+                edge_summary.update({"cloud_mode": config["public_cloud_mode"]})                      
     except Exception as err:
         errors.append(str(err))
 
