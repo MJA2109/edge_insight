@@ -171,9 +171,9 @@ def get_edge_summary():
                 errors.append(AB_PATH_2)
             else:
                 try:
-                    edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
-                    edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
                     edge_summary.update({"size": config["vm_form_factor"]})
+                    edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
+                    edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
                 except KeyError as err:
                     errors.append("Unable to find value:" + str(err))             
     except Exception as err:
@@ -189,6 +189,7 @@ def get_edge_summary():
     
     edge_summary.update(is_configured(get_lbs(), "lb_configued"))
     edge_summary.update(is_configured(get_ipsec_vpn(), "ipsec_configured"))
+    edge_summary.update({"tunnels_down": get_tunnels("state") })
 
 
     try: 
@@ -203,15 +204,51 @@ def get_edge_summary():
                     for tep in config:
                         if tep["local-vtep-ip"] not in edge_summary["teps"]:
                             edge_summary["teps"].append(tep["local-vtep-ip"])
-                        edge_summary["tunnels"].append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
+                except KeyError as err:
+                    errors.append("Unable to find value:" + str(err))
+    except Exception as err:
+        errors.append(str(err))
+    
+    edge_summary["errors"] = errors
+    return edge_summary
+
+
+def get_tunnels(option):
+
+    options = ["list", "state"]
+    FILE_1 = BASE_PATH + "/edge/tunnel-ports-stat"
+    tunnels = []
+    tunnel_state = []
+
+    try: 
+        with open(FILE_1, "r", encoding="UTF-8") as jfile:
+            try:
+                config = json.load(jfile)
+            except json.decoder.JSONDecodeError:
+                errors.append(FILE_1)
+            else:
+                try:
+                    for tep in config:
+                        tunnels.append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
                 except KeyError as err:
                     errors.append("Unable to find value:" + str(err))
     except Exception as err:
         errors.append(str(err))
 
+    if option == options[0]:
+        return tunnels
     
-    edge_summary["errors"] = errors
-    return edge_summary
+    elif option == options[1]:
+        for tunnel in tunnels:
+            if tunnel["state"] == "down":
+                tunnel_state.append("down")   
+        if "down" in tunnel_state:
+            return True
+        else:
+            return False
+    else:
+        raise ValueError("A string of value 'list' or 'state' must be provided as argument")
+
 
 
 def is_configured(configured, service):
@@ -578,7 +615,6 @@ def main():
     elif args["diag"]:
         #format_dict(get_diag())
         format_output(get_diag(), "DIAGNOSTICS")
-
 
 
     """
