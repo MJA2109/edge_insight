@@ -189,6 +189,7 @@ def get_edge_summary():
     else:
         core_dump = True
     
+    edge_summary.update({"core_dump": core_dump})
     edge_summary.update(is_configured(get_lbs(), "lb_configued"))
     edge_summary.update(is_configured(get_ipsec_vpn(), "ipsec_configured"))
     edge_summary.update({"tunnels_down": get_tunnels("state") })
