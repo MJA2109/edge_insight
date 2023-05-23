@@ -271,39 +271,52 @@ def is_configured(configured, service):
 
 def get_edge_performance():
 
-    FILE_3 = "/edge/flowcache-config"
-    FILE_4 = "/var/run/vmware/edge/cpu_usage.json"
-    FILE_9 = "/edge/datapath-cpu-stats"
+    flowcache_config = "/edge/flowcache-config"
+    cpu_usage = "/var/run/vmware/edge/cpu_usage.json"
+    cpu_dp_stats = "/edge/datapath-cpu-stats"
 
     edge_perf = {}
     
-    with open(BASE_PATH + FILE_4, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
-                                 "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
-                                 "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_4)
-        except KeyError as e:
-            errors.append(str(e))
+    try:
+        with open(BASE_PATH + cpu_usage, "r", encoding="UTF-8") as jfile:
+            try:
+                config = json.load(jfile)
+                edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
+                                     "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
+                                     "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
+            except json.decoder.JSONDecodeError:
+                ei_log.warn("Unable to obtain edge performance data from log bundle. Exception whilst reading:" + cpu_usage)
+            except KeyError as err:
+                ei_log.warn(str(err))
+    except OSError as err:
+        ei_log.warn(err)
 
-    with open(BASE_PATH + FILE_3, "r", encoding="UTF-8") as jfile:
-        try:
-            config = json.load(jfile)
-            edge_perf.update({"flow_cache": config["enabled"]})
-        except json.decoder.JSONDecodeError:
-            errors.append(FILE_3)
-        except KeyError as e:
-            errors.append(str(e))
+   
+    try:
+        with open(BASE_PATH + flowcache_config, "r", encoding="UTF-8") as jfile:
+            try:
+                config = json.load(jfile)
+                edge_perf.update({"flow_cache": config["enabled"]})
+            except json.decoder.JSONDecodeError:
+                ei_log.warn("Unable to obtain edge performance data from log bundle. Exception whilst reading:" + flowcache_config)
+            except KeyError as e:
+                ei_log.warn(str(e))
+    except OSError as err:
+        ei_log.warn(err)
 
     
-    with open(BASE_PATH + FILE_9, "r", encoding="UTF-8") as lfile:
-        temp_list = literal_eval(lfile.read().strip())
-        edge_perf.update({"cores" : []})
-        for core in temp_list:
-            edge_perf["cores"].append({"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
-    
+    try: 
+        with open(BASE_PATH + cpu_dp_stats, "r", encoding="UTF-8") as lfile:
+            try:
+                temp_list = literal_eval(lfile.read().strip())
+            except Exception as err:
+                ei_log.warn(str(err))
+            else:
+                edge_perf.update({"cores" : []})
+                for core in temp_list:
+                    edge_perf["cores"].append({"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
+    except OSError as err:
+        ei_log.warn(err)
 
     return edge_perf
 
