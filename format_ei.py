@@ -2,7 +2,6 @@ from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
-
 def format_fw_output(data_input):
 
     table = Table(title="FW CONNECTION STATS", title_style="black on yellow", show_header=False)
@@ -23,4 +22,5 @@ def format_output(data_input, name):
         table.add_row(key, str(data_input[key]))    
     console = Console()
     console.print(table)
+
 

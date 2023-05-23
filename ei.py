@@ -13,6 +13,7 @@ import socket
 import struct
 from format_ei import *
 from ast import literal_eval
+from logging.handlers import RotatingFileHandler
 
 
 
@@ -29,8 +30,14 @@ class colours():
 
 DIV = "---------------------------------------------------------"
 
-logging.basicConfig(level=logging.DEBUG, filename="ei.log", filemode="a",
-                    format="[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s", datefmt="%Y-%m-%dT%H:%M:%SZ")
+log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
+log_file = 'ei.log'
+ei_handler = RotatingFileHandler(log_file, mode='a', maxBytes=5*1024*1024,backupCount=5, encoding=None, delay=0)
+ei_handler.setFormatter(log_formatter)
+ei_handler.setLevel(logging.INFO)
+ei_log = logging.getLogger('root')
+ei_log.setLevel(logging.INFO)
+ei_log.addHandler(ei_handler)
 
 
 def gsearch(path, re_pattern, delimiter="", index=0):
@@ -223,20 +230,19 @@ def get_tunnels(option):
     tunnels = []
     tunnel_state = []
 
-    try: 
-        with open(FILE_1, "r", encoding="UTF-8") as jfile:
+    
+    with open(FILE_1, "r", encoding="UTF-8") as jfile:
+        try:
+            config = json.load(jfile)
+        except json.decoder.JSONDecodeError:
+            ei_log.warn("Unable to obtain tunnel configuration from log bundle. Exception whilst reading /edge/tunnel-ports-stat")
+        else:
             try:
-                config = json.load(jfile)
-            except json.decoder.JSONDecodeError:
-                errors.append(FILE_1)
-            else:
-                try:
-                    for tep in config:
-                        tunnels.append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
-                except KeyError as err:
-                    errors.append("Unable to find value:" + str(err))
-    except Exception as err:
-        errors.append(str(err))
+                for tep in config:
+                    tunnels.append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
+            except KeyError as err:
+                ei_log.warn(err)
+    
 
     if option == options[0]:
         return tunnels
