@@ -360,11 +360,20 @@ def get_logical_routers():
                         temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
                                 "ha_config" : "None", "ha_state" : "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
 
+                   
+                    print(ha_configs)
+
+                    """
                     for ha in ha_configs:
                         f_uuid = convert_uuid(temp["uuid"])
 
-                        if f_uuid == ha["uuid"]:
-                            temp.update({"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
+                        try:
+                            if f_uuid == ha["uuid"]:
+                                temp.update({"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
+                        except KeyError as err:
+                            print("key error")
+                    """
+
                     
                     for port in lr["ports"]:
                         if port["ptype"] == "downlink" or port["ptype"] == "backplane" or port["ptype"] == "uplink" or port["ptype"] == "linked":
@@ -434,25 +443,31 @@ def get_topology():
 
     return topology
 
+
+
 def get_ha():
 
-    ha_len = 11
-    config = []
     ha_config = {}
     ha_configs = []
-    FILE = BASE_PATH + "/edge/logical_topology"
+    logical_topology = BASE_PATH + "/edge/logical_topology"
     
-    with open(FILE, "r", encoding="utf-8") as lines:
-        for line in lines:
+    with open(logical_topology, "r", encoding="utf-8") as topology:
+        for line in topology:
+            
             if "SR" in line:
-                config.append(line.replace("(", "").replace(")", "").replace(",", "").strip().split())
-        for ha in config:
-            if "A/S" in ha and len(ha) == ha_len:
-                ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": ha[5], "state": ha[10]})
-            else:
-                ha_config.update({"uuid" : ha[2], "config": ha[3], "preempt": "None", "state": ha[8]})
-        
-            ha_configs.append(ha_config.copy())
+
+                clean_line = line.replace("(", "").replace(")", "").replace(",", "").replace("|", "").replace("rank", "").strip().split()
+           
+                if "A/S" in line:
+                    
+                    ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": clean_line[4], "state": clean_line[6]})
+                    ha_configs.append(ha_config.copy())
+
+                elif "A/A" in line:
+
+                    ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": "NA", "state": clean_line[5]})
+                    ha_configs.append(ha_config.copy())
+
         return ha_configs
 
 
