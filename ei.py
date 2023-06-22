@@ -452,17 +452,17 @@ def get_ha():
             if "SR" in line:
 
                 clean_line = line.replace("(", "").replace(")", "").replace(",", "").replace("|", "").replace("rank", "").strip().split()
-           
-                if "A/S" in line:
+
+                if "A/S" in clean_line and len(clean_line) == 7:
                     
                     ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": clean_line[4], "state": clean_line[6]})
                     ha_configs.append(ha_config.copy())
 
-                elif "A/A" in line:
+                else:
 
                     ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": "NA", "state": clean_line[5]})
                     ha_configs.append(ha_config.copy())
-
+                
         return ha_configs
 
 
