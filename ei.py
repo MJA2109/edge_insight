@@ -360,11 +360,8 @@ def get_logical_routers():
                         temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
                                 "ha_config" : "None", "ha_state" : "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
 
-                   
-                    print(ha_configs)
-
-                    """
                     for ha in ha_configs:
+                        
                         f_uuid = convert_uuid(temp["uuid"])
 
                         try:
@@ -372,9 +369,7 @@ def get_logical_routers():
                                 temp.update({"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
                         except KeyError as err:
                             print("key error")
-                    """
-
-                    
+                        
                     for port in lr["ports"]:
                         if port["ptype"] == "downlink" or port["ptype"] == "backplane" or port["ptype"] == "uplink" or port["ptype"] == "linked":
                             for ip in port["ipns"]:
