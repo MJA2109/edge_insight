@@ -1,20 +1,22 @@
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
+import pprint
+import re
 
-def format_fw_output(data_input):
+def format_list_output(data_input, name):
 
-    table = Table(title="FW CONNECTION STATS", title_style="black on yellow", show_header=False)
+    table = Table(title=name, title_style="black on yellow", show_header=False)
 
     for item in data_input:
-        for key in item:
-            table.add_row(key, item[key])
+        for key, value in item.items():
+            table.add_row(key, str(value))
         table.add_section()
     console = Console()
     console.print(table)
+    
 
-
-def format_output(data_input, name):
+def format_dict_output(data_input, name):
 
     table = Table(title=name, title_style="black on yellow", show_header=False)
 
@@ -22,5 +24,6 @@ def format_output(data_input, name):
         table.add_row(key, str(data_input[key]))    
     console = Console()
     console.print(table)
+    
 
 

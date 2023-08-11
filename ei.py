@@ -11,6 +11,7 @@ import logging
 import argparse
 import socket
 import struct
+import pprint
 from format_ei import *
 from ast import literal_eval
 from logging.handlers import RotatingFileHandler
@@ -361,7 +362,7 @@ def get_logical_routers():
                                 "ha_config" : "None", "ha_state" : "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
 
                     for ha in ha_configs:
-                        
+
                         f_uuid = convert_uuid(temp["uuid"])
 
                         try:
@@ -629,24 +630,19 @@ def main():
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
     if args["summary"]:
-        #format_summary(get_edge_summary())
-        format_output(get_edge_summary(), "EDGE SUMMARY")
+        format_dict_output(get_edge_summary(), "EDGE SUMMARY")
     elif args["performance"]:
-        format_dict(get_edge_performance())
+        format_dict_output(get_edge_performance(), "EDGE PERF STATS")
     elif args["router"]:
-        format_list(get_logical_routers())
+        format_list_output(get_logical_routers(), "LOGICAL ROUTERS")
     elif args["load_balancer"]:
-        format_list(get_lbs())
-        #format_output(get_lbs())
+        format_list_output(get_lbs(), "LOAD BALANCERS")
     elif args["firewall"]:
-        #format_list(get_fw_stats())
-        format_fw_output(get_fw_stats())
+        format_list_output(get_fw_stats(), "FIREWALL CONNECTION STATS")
     elif args["ipsec"]:
-        #get_ipsec_vpn()
-        format_output(get_ipsec_vpn(), "POLICY BASED VPN")
+        format_list_output(get_ipsec_vpn(), "IPSEC")
     elif args["diag"]:
-        #format_dict(get_diag())
-        format_output(get_diag(), "DIAGNOSTICS")
+        format_list_output(get_diag(), "DIAGNOSTICS")
 
 
     """
