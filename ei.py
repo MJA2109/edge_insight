@@ -642,7 +642,7 @@ def main():
     elif args["ipsec"]:
         format_list_output(get_ipsec_vpn(), "IPSEC")
     elif args["diag"]:
-        format_list_output(get_diag(), "DIAGNOSTICS")
+        format_dict_output(get_diag(), "DIAGNOSTICS")
 
 
     """
