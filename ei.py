@@ -275,8 +275,18 @@ def get_edge_performance():
     flowcache_config = "/edge/flowcache-config"
     cpu_usage = "/var/run/vmware/edge/cpu_usage.json"
     cpu_dp_stats = "/edge/datapath-cpu-stats"
+    datapath_configuration = "/edge/datapath-configuration"
 
     edge_perf = {}
+
+    try:
+        with open(BASE_PATH + datapath_configuration, "r", encoding="UTF-8") as jfile:
+            dpconfig = json.load(jfile)
+            edge_perf.update({"corelist": dpconfig["corelist"], "service_corelist": dpconfig["service_corelist"]})
+            #print(dpconfig["dispatcher_corelist"]) Will need to test other bundles see if this values exists
+    except OSError as err:
+        print(err)
+        ei_log.warn(err)
     
     try:
         with open(BASE_PATH + cpu_usage, "r", encoding="UTF-8") as jfile:
@@ -318,6 +328,7 @@ def get_edge_performance():
                     edge_perf["cores"].append({"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
     except OSError as err:
         ei_log.warn(err)
+
 
     return edge_perf
 
