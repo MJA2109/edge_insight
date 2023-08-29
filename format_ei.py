@@ -4,6 +4,9 @@ from rich.tree import Tree
 import pprint
 import re
 
+table = Table(title="test", title_style="black on yellow", show_header=False)
+nested = Table()
+
 def format_list_output(data_input, name):
 
     table = Table(title=name, title_style="black on yellow", show_header=False)
@@ -14,6 +17,7 @@ def format_list_output(data_input, name):
         table.add_section()
     console = Console()
     console.print(table)
+
     
 
 def format_dict_output(data_input, name):

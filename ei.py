@@ -160,6 +160,10 @@ def get_edge_summary():
         errors.append(err)
     
 
+    no_of_routers = get_no_of_routers()
+    edge_summary.update({"no_of_t0s": no_of_routers["t0s"]})
+    edge_summary.update({"no_of_t1s": no_of_routers["t1s"]})
+
     try:
         cpus = gsearch(AB_PATH_8, "CPU\(s\)", ":", index=1) 
         cores = gsearch(AB_PATH_8, "Core\(s\)", ":", index=1)
@@ -189,6 +193,7 @@ def get_edge_summary():
     except Exception as err:
         errors.append(str(err))
 
+
     
     diag_dict = get_diag()
     
@@ -200,6 +205,7 @@ def get_edge_summary():
     edge_summary.update({"core_dump": core_dump})
     edge_summary.update(is_configured(get_lbs(), "lb_configued"))
     edge_summary.update(is_configured(get_ipsec_vpn(), "ipsec_configured"))
+
     edge_summary.update({"tunnels_down": get_tunnels("state") })
 
 
@@ -223,6 +229,17 @@ def get_edge_summary():
     edge_summary["errors"] = errors
     return edge_summary
 
+def get_no_of_routers():
+
+    no_of_routers={"t0s": 0, "t1s": 0}
+
+    routers = get_logical_routers()
+    for router in routers:
+        if "SERVICE_ROUTER_TIER0" in router["type"]:
+            no_of_routers["t0s"]+=1
+        elif "SERVICE_ROUTER_TIER1" in router["type"]:
+            no_of_routers["t1s"]+=1
+    return no_of_routers
 
 def get_tunnels(option):
 
@@ -578,43 +595,6 @@ def get_diag():
     return diag
 
     
-def format_list(list):
-
-    for component in list:
-
-        if "vrf" in component:
-            ws = component["ws"] 
-            ws -= 3
-            print("{:{space}} {}".format("", DIV, space = ws))
-            for key in component:
-                print("{:{space}} {:14}: {}".format("", key, component[key], space = ws))
-        else:  
-            print(DIV)
-            for key in component:
-                print("{:18}: {}".format(key, component[key]))
-
-
-def format_dict(dicts):
-
-    for key, val in dicts.items():
-
-        if key == "interfaces":
-            print("{:16}:".format(key))
-            for interface in val:
-                print("{:>19} {}".format(":", str(interface)))
-                 
-        elif key == "tunnels":
-            print("{:18}:".format(key))
-            for tunnel in val:
-                print("{:>19} {}".format(":", str(tunnel))) 
-        elif key == "cores":
-            print("{:18}:".format(key))
-            for core in val:
-                print("{:>19} {}".format(":", str(core))) 
-        else:
-            print("{:18}: {}".format(key, val))
-
-
 
 def main():
         
@@ -647,7 +627,7 @@ def main():
     elif args["router"]:
         format_list_output(get_logical_routers(), "LOGICAL ROUTERS")
     elif args["load_balancer"]:
-        format_list_output(get_lbs(), "LOAD BALANCERS")
+        format_list_output(get_lbs(), "LOAD BALANCER")
     elif args["firewall"]:
         format_list_output(get_fw_stats(), "FIREWALL CONNECTION STATS")
     elif args["ipsec"]:
