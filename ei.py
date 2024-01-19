@@ -17,7 +17,6 @@ from ast import literal_eval
 from logging.handlers import RotatingFileHandler
 
 
-
 class colours():
     header = '\033[95m'
     okblue = '\033[94m'
@@ -33,7 +32,7 @@ DIV = "---------------------------------------------------------"
 
 log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
 log_file = 'ei.log'
-ei_handler = RotatingFileHandler(log_file, mode='a', maxBytes=5*1024*1024,backupCount=5, encoding=None, delay=0)
+ei_handler = RotatingFileHandler(log_file, mode='a', maxBytes=5 * 1024 * 1024, backupCount=5, encoding=None, delay=0)
 ei_handler.setFormatter(log_formatter)
 ei_handler.setLevel(logging.INFO)
 ei_log = logging.getLogger('root')
@@ -80,7 +79,6 @@ def get_oldest_timestamp(log):
 
 
 def get_edge_summary():
-
     AB_PATH_1 = BASE_PATH + "/node_config.json"
     AB_PATH_2 = BASE_PATH + "/config/vmware/edge/config.json"
     AB_PATH_5 = BASE_PATH + "/edge/tunnel-ports-stat"
@@ -94,7 +92,7 @@ def get_edge_summary():
     errors = []
     edge_summary = {}
 
-    try: 
+    try:
         with open(AB_PATH_1, "r", encoding="UTF-8") as jfile:
             try:
                 node_config = json.load(jfile)
@@ -104,15 +102,17 @@ def get_edge_summary():
                 try:
                     for config in node_config:
                         if config == "/api/v1/node":
-                            edge_summary.update({"fqdn": node_config[config]["hostname"], "uuid": node_config[config]["node_uuid"],
-                                                 "version": node_config[config]["node_version"], "kernel": node_config[config]["kernel_version"],
-                                                 "date": node_config[config]["system_datetime"]})
+                            edge_summary.update(
+                                {"fqdn": node_config[config]["hostname"], "uuid": node_config[config]["node_uuid"],
+                                 "version": node_config[config]["node_version"],
+                                 "kernel": node_config[config]["kernel_version"],
+                                 "date": node_config[config]["system_datetime"]})
                 except KeyError as err:
                     errors.append("Unable to find value:" + str(err))
     except OSError as err:
-        errors.append(err) 
+        errors.append(err)
 
-    try: 
+    try:
         with open(AB_PATH_9, "r", encoding="UTF-8") as rfile:
             lfile = rfile.read()
             temp_list = literal_eval(lfile)
@@ -120,21 +120,19 @@ def get_edge_summary():
                 try:
                     edge_summary.update({"status": item["status"]})
                 except KeyError as err:
-                    errors.append("Unable to find value:" + str(err))    
+                    errors.append("Unable to find value:" + str(err))
     except OSError as err:
         errors.append(err)
-
 
     try:
         with open(AB_PATH_10, "r", encoding="UTF-8") as controllers:
             ctrl_string = controllers.read()
             ctrl_string = ctrl_string.replace("true", "True").replace("false", "False")
             ctrl_list = literal_eval(ctrl_string)
-            #will include decimal to ip convertion here at the later stage
+            # will include decimal to ip convertion here at the later stage
     except OSError as err:
         errors.append(err)
 
-  
     try:
         addr = gsearch(AB_PATH_6, "address", "address ", 1)
         mask = gsearch(AB_PATH_6, "netmask", "netmask ", 1)
@@ -150,7 +148,7 @@ def get_edge_summary():
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_1)
             else:
-                try: 
+                try:
                     for config in node_config:
                         if config == "/api/v1/node/network/name-servers":
                             edge_summary.update({"dns": node_config[config]["name_servers"]})
@@ -158,58 +156,53 @@ def get_edge_summary():
                     errors.append("Unable to find value:" + str(err))
     except OSError as err:
         errors.append(err)
-    
 
     no_of_routers = get_no_of_routers()
     edge_summary.update({"no_of_t0s": no_of_routers["t0s"]})
     edge_summary.update({"no_of_t1s": no_of_routers["t1s"]})
 
     try:
-        cpus = gsearch(AB_PATH_8, "CPU\(s\)", ":", index=1) 
+        cpus = gsearch(AB_PATH_8, "CPU\(s\)", ":", index=1)
         cores = gsearch(AB_PATH_8, "Core\(s\)", ":", index=1)
-        edge_summary.update({"cpus": cpus.strip(), "cores_per_socket": cores.strip() })
+        edge_summary.update({"cpus": cpus.strip(), "cores_per_socket": cores.strip()})
         total_mem = gsearch(AB_PATH_7, "MemTotal", ":", index=1)
         total = int(total_mem.strip("kB")) // KB + 1
         edge_summary.update({"memory(GB)": total})
     except Exception as err:
         errors.append(str(err))
 
-
-    try: 
+    try:
         with open(AB_PATH_2, "r", encoding="UTF-8") as jfile:
             try:
                 config = json.load(jfile)
             except json.decoder.JSONDecodeError:
                 errors.append(AB_PATH_2)
             else:
-                #if bare metal edge vm_form_factor attribute won't be present
+                # if bare metal edge vm_form_factor attribute won't be present
                 try:
                     edge_summary.update({"size": config["vm_form_factor"]})
                 except KeyError as err:
                     errors.append("Unable to find value:" + str(err))
 
                 edge_summary.update({"bare_metal": config["is_bare_metal_edge"]})
-                edge_summary.update({"cloud_mode": config["public_cloud_mode"]})                      
+                edge_summary.update({"cloud_mode": config["public_cloud_mode"]})
     except Exception as err:
         errors.append(str(err))
 
-
-    
     diag_dict = get_diag()
-    
+
     if "core" in diag_dict["passed"]:
         core_dump = False
     else:
         core_dump = True
-    
+
     edge_summary.update({"core_dump": core_dump})
     edge_summary.update(is_configured(get_lbs(), "lb_configued"))
     edge_summary.update(is_configured(get_ipsec_vpn(), "ipsec_configured"))
 
-    edge_summary.update({"tunnels_down": get_tunnels("state") })
+    edge_summary.update({"tunnels_down": get_tunnels("state")})
 
-
-    try: 
+    try:
         with open(AB_PATH_5, "r", encoding="UTF-8") as jfile:
             try:
                 config = json.load(jfile)
@@ -225,50 +218,51 @@ def get_edge_summary():
                     errors.append("Unable to find value:" + str(err))
     except Exception as err:
         errors.append(str(err))
-    
+
     edge_summary["errors"] = errors
     return edge_summary
 
-def get_no_of_routers():
 
-    no_of_routers={"t0s": 0, "t1s": 0}
+def get_no_of_routers():
+    no_of_routers = {"t0s": 0, "t1s": 0}
 
     routers = get_logical_routers()
     for router in routers:
         if "SERVICE_ROUTER_TIER0" in router["type"]:
-            no_of_routers["t0s"]+=1
+            no_of_routers["t0s"] += 1
         elif "SERVICE_ROUTER_TIER1" in router["type"]:
-            no_of_routers["t1s"]+=1
+            no_of_routers["t1s"] += 1
     return no_of_routers
 
-def get_tunnels(option):
 
+def get_tunnels(option):
     options = ["list", "state"]
     FILE_1 = BASE_PATH + "/edge/tunnel-ports-stat"
     tunnels = []
     tunnel_state = []
 
-    
     with open(FILE_1, "r", encoding="UTF-8") as jfile:
         try:
             config = json.load(jfile)
         except json.decoder.JSONDecodeError:
-            ei_log.warn("Unable to obtain tunnel configuration from log bundle. Exception whilst reading /edge/tunnel-ports-stat")
+            ei_log.warn(
+                "Unable to obtain tunnel configuration from log bundle. Exception whilst reading /edge/tunnel-ports-stat")
         else:
             try:
                 for tep in config:
-                    tunnels.append({"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"], "state": tep["admin"]})
+                    tunnels.append(
+                        {"local": tep["local-vtep-ip"], "remote": tep["remote-vtep-ip"], "encap": tep["encap"],
+                         "state": tep["admin"]})
             except KeyError as err:
                 ei_log.warn(err)
-    
 
     if option == options[0]:
         return tunnels
-    
+
     elif option == options[1]:
         for tunnel in tunnels:
             if tunnel["state"] == "down":
-                tunnel_state.append("down")   
+                tunnel_state.append("down")
         if "down" in tunnel_state:
             return True
         else:
@@ -277,18 +271,16 @@ def get_tunnels(option):
         raise ValueError("A string of value 'list' or 'state' must be provided as argument")
 
 
-
 def is_configured(configured, service):
     srv = {}
     if not configured:
-        srv.update({service : False})
+        srv.update({service: False})
     else:
         srv.update({service: True})
     return srv
 
 
 def get_edge_performance():
-
     flowcache_config = "/edge/flowcache-config"
     cpu_usage = "/var/run/vmware/edge/cpu_usage.json"
     cpu_dp_stats = "/edge/datapath-cpu-stats"
@@ -300,58 +292,59 @@ def get_edge_performance():
         with open(BASE_PATH + datapath_configuration, "r", encoding="UTF-8") as jfile:
             dpconfig = json.load(jfile)
             edge_perf.update({"corelist": dpconfig["corelist"], "service_corelist": dpconfig["service_corelist"]})
-            #print(dpconfig["dispatcher_corelist"]) Will need to test other bundles see if this values exists
+            # print(dpconfig["dispatcher_corelist"]) Will need to test other bundles see if this values exists
     except OSError as err:
         print(err)
         ei_log.warn(err)
-    
+
     try:
         with open(BASE_PATH + cpu_usage, "r", encoding="UTF-8") as jfile:
             try:
                 config = json.load(jfile)
-                edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"], "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
-                                     "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"], "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
-                                     "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
+                edge_perf.update({"dp_cores": config["dpdk_cpu_cores"], "service_cores": config["non_dpdk_cpu_cores"],
+                                  "hgt_dp_core": config["highest_cpu_core_usage_dpdk"],
+                                  "hgt_service_core": config["highest_cpu_core_usage_non_dpdk"],
+                                  "avg_dp_core": config["avg_cpu_core_usage_dpdk"],
+                                  "avg_service_core": config["avg_cpu_core_usage_non_dpdk"]})
             except json.decoder.JSONDecodeError:
-                ei_log.warn("Unable to obtain edge performance data from log bundle. Exception whilst reading:" + cpu_usage)
+                ei_log.warn(
+                    "Unable to obtain edge performance data from log bundle. Exception whilst reading:" + cpu_usage)
             except KeyError as err:
                 ei_log.warn(str(err))
     except OSError as err:
         ei_log.warn(err)
 
-   
     try:
         with open(BASE_PATH + flowcache_config, "r", encoding="UTF-8") as jfile:
             try:
                 config = json.load(jfile)
                 edge_perf.update({"flow_cache": config["enabled"]})
             except json.decoder.JSONDecodeError:
-                ei_log.warn("Unable to obtain edge performance data from log bundle. Exception whilst reading:" + flowcache_config)
+                ei_log.warn(
+                    "Unable to obtain edge performance data from log bundle. Exception whilst reading:" + flowcache_config)
             except KeyError as e:
                 ei_log.warn(str(e))
     except OSError as err:
         ei_log.warn(err)
 
-    
-    try: 
+    try:
         with open(BASE_PATH + cpu_dp_stats, "r", encoding="UTF-8") as lfile:
             try:
                 temp_list = literal_eval(lfile.read().strip())
             except Exception as err:
                 ei_log.warn(str(err))
             else:
-                edge_perf.update({"cores" : []})
+                edge_perf.update({"cores": []})
                 for core in temp_list:
-                    edge_perf["cores"].append({"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
+                    edge_perf["cores"].append(
+                        {"core": core["core"], "rx": core["rx"], "tx": core["rx"], "usage": core["usage"]})
     except OSError as err:
         ei_log.warn(err)
 
-
     return edge_perf
 
-    
-def sort_logical_routers(logical_routers, logical_topology):
 
+def sort_logical_routers(logical_routers, logical_topology):
     sorted_routers = list()
 
     for top in logical_topology:
@@ -364,7 +357,6 @@ def sort_logical_routers(logical_routers, logical_topology):
 
 
 def get_logical_routers():
-
     FILE = BASE_PATH + "/edge/logical-routers"
 
     with open(FILE, "r", encoding='utf-8') as jfile:
@@ -384,10 +376,12 @@ def get_logical_routers():
 
                     if "peer_vrf" in lr:
                         temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
-                                "ha_config" : "None", "ha_state": "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
+                                "ha_config": "None", "ha_state": "none", "ha_preempt": "none", "uplink": [],
+                                "linked": [], "backplane": [], "downlink": []}
                     else:
                         temp = {"uuid": lr["uuid"], "name": lr["name"], "type": lr["type"], "vrf": lr["vrf"],
-                                "ha_config" : "None", "ha_state" : "none", "ha_preempt": "none", "uplink": [], "linked": [], "backplane": [], "downlink": []}
+                                "ha_config": "None", "ha_state": "none", "ha_preempt": "none", "uplink": [],
+                                "linked": [], "backplane": [], "downlink": []}
 
                     for ha in ha_configs:
 
@@ -395,12 +389,14 @@ def get_logical_routers():
 
                         try:
                             if f_uuid == ha["uuid"]:
-                                temp.update({"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
+                                temp.update(
+                                    {"ha_config": ha["config"], "ha_state": ha["state"], "ha_preempt": ha["preempt"]})
                         except KeyError as err:
                             print("key error")
-                        
+
                     for port in lr["ports"]:
-                        if port["ptype"] == "downlink" or port["ptype"] == "backplane" or port["ptype"] == "uplink" or port["ptype"] == "linked":
+                        if port["ptype"] == "downlink" or port["ptype"] == "backplane" or port["ptype"] == "uplink" or \
+                                port["ptype"] == "linked":
                             for ip in port["ipns"]:
                                 if not ipv6.match(ip):
                                     temp[port["ptype"]].append(ip)
@@ -411,14 +407,15 @@ def get_logical_routers():
                             temp["ws"] = d["ws"]
 
                     routers.append(temp)
-            
-            sortd = sort_logical_routers(routers, get_topology())  
-            
+
+            sortd = sort_logical_routers(routers, get_topology())
+
             return sortd
 
         except json.decoder.JSONDecodeError:
             print(colours.warning +
                   "Unable to process data from {}".format(FILE) + colours.endc)
+
 
 def clean_input(line):
     print(line)
@@ -427,34 +424,36 @@ def clean_input(line):
     c = s.replace('"', '')
     return s
 
+
 def convert_uuid(t_uuid):
     f_uuid = t_uuid[0:4] + ".*" + t_uuid[-4:]
     return f_uuid
 
-def get_fw_stats():
 
+def get_fw_stats():
     AB_PATH_1 = "/edge/fw-total-stats"
     fw_dict = {}
     fw_list = []
-    
-    with open(BASE_PATH + AB_PATH_1, "r", encoding="utf-8") as fw_stats:
 
+    with open(BASE_PATH + AB_PATH_1, "r", encoding="utf-8") as fw_stats:
         fw_stats_str = fw_stats.read()
         fw_stats_str = fw_stats_str.replace("true", "True").replace("false", "False")
         fw_stats_list = literal_eval(fw_stats_str)
-        
-        for fw_stat in fw_stats_list:
 
-            fw_dict.update({"uuid": fw_stat["uuid"], "name": fw_stat["name"], "type": fw_stat["type"], "connection-count": fw_stat["connection-count"],
-                           "tcp_ho_active_max": fw_stat["TCP Half Opened Active/Max"], "udp_active_max": fw_stat["UDP Active/Max"], "icmp_active_max": fw_stat["ICMP Active/Max"],
-                           "other_active_max": fw_stat["Other Active/Max"], "nat_active_max": fw_stat["NAT Active/Max"]})
-            
+        for fw_stat in fw_stats_list:
+            fw_dict.update({"uuid": fw_stat["uuid"], "name": fw_stat["name"], "type": fw_stat["type"],
+                            "connection-count": fw_stat["connection-count"],
+                            "tcp_ho_active_max": fw_stat["TCP Half Opened Active/Max"],
+                            "udp_active_max": fw_stat["UDP Active/Max"], "icmp_active_max": fw_stat["ICMP Active/Max"],
+                            "other_active_max": fw_stat["Other Active/Max"],
+                            "nat_active_max": fw_stat["NAT Active/Max"]})
+
             fw_list.append(fw_dict)
 
-        return fw_list  
+        return fw_list
+
 
 def get_topology():
-
     topology = list()
 
     PATH = BASE_PATH + "/edge/logical_topology"
@@ -468,30 +467,31 @@ def get_topology():
     return topology
 
 
-
 def get_ha():
-
     ha_config = {}
     ha_configs = []
     logical_topology = BASE_PATH + "/edge/logical_topology"
-    
+
     with open(logical_topology, "r", encoding="utf-8") as topology:
         for line in topology:
-            
+
             if "SR" in line:
 
-                clean_line = line.replace("(", "").replace(")", "").replace(",", "").replace("|", "").replace("rank", "").strip().split()
+                clean_line = line.replace("(", "").replace(")", "").replace(",", "").replace("|", "").replace("rank",
+                                                                                                              "").strip().split()
 
                 if "A/S" in clean_line and len(clean_line) == 7:
-                    
-                    ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": clean_line[4], "state": clean_line[6]})
+
+                    ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": clean_line[4],
+                                      "state": clean_line[6]})
                     ha_configs.append(ha_config.copy())
 
                 else:
 
-                    ha_config.update({"uuid": clean_line[2], "config": clean_line[3], "preempt": "NA", "state": clean_line[5]})
+                    ha_config.update(
+                        {"uuid": clean_line[2], "config": clean_line[3], "preempt": "NA", "state": clean_line[5]})
                     ha_configs.append(ha_config.copy())
-                
+
         return ha_configs
 
 
@@ -500,13 +500,13 @@ def get_leading_ws(line_arg):
     leading_ws = len(line) - len(line.lstrip())
     return leading_ws
 
+
 def dec_to_ip(decimal):
     ip = socket.inet_ntoa(struct.pack('!L', decimal))
     return ip
 
 
 def get_lbs():
-
     local_lb = []
 
     PATH = BASE_PATH + "/edge/lb-stats"
@@ -515,18 +515,19 @@ def get_lbs():
         lbs = json.load(jfile)
         for lb in lbs["lbs"]:
             local_lb.append(
-                {"LB Name": lb["display_name"], "LB Enabled": lb["enabled"], "LB Size": lb["size"], "LB UUID": lb["uuid"]})
+                {"LB Name": lb["display_name"], "LB Enabled": lb["enabled"], "LB Size": lb["size"],
+                 "LB UUID": lb["uuid"]})
             for vip in lb["virtual_servers"]:
-
-                local_lb.append({"Name": vip["display_name"], "IP": vip["ip_address"], "Port": vip["port"], "Proto": vip["ip_protocol"],
-                                 "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"], "Tot Ses": vip["total_sess"], 
+                local_lb.append({"Name": vip["display_name"], "IP": vip["ip_address"], "Port": vip["port"],
+                                 "Proto": vip["ip_protocol"],
+                                 "Type": vip["type"], "Cur Ses": vip["curr_sess"], "Max Ses": vip["max_sess"],
+                                 "Tot Ses": vip["total_sess"],
                                  "Req Rate": vip["req_rate"], "Ses Rate": vip["sess_rate"], "UUID": vip["uuid"]})
 
     return local_lb
 
 
 def get_ipsec_vpn():
-
     FILE_1 = BASE_PATH + "/edge/vpn-session"
     ipsec = []
     session = {}
@@ -540,41 +541,42 @@ def get_ipsec_vpn():
                 vpn_sessions = literal_eval(vpn_sessions_str)
             except Exception as err:
                 pass
-                #print("No IPSEC configured on Edge.")
+                # print("No IPSEC configured on Edge.")
             else:
                 for vpn_session in vpn_sessions:
-                
-                    session.update({"uuid": vpn_session["id"], "type": vpn_session["Type"], "status": vpn_session["Session_Status"],  
-                                  "local_endpoint_ip": dec_to_ip(vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]),
-                                   "peer_endpoint_ip": vpn_session["Peer_Endpoint_Profile"]["Peer_Address"],
+
+                    session.update({"uuid": vpn_session["id"], "type": vpn_session["Type"],
+                                    "status": vpn_session["Session_Status"],
+                                    "local_endpoint_ip": dec_to_ip(
+                                        vpn_session["Local_Endpoint_Profile"]["Local_Address"]["ipv4"]),
+                                    "peer_endpoint_ip": vpn_session["Peer_Endpoint_Profile"]["Peer_Address"],
                                     "session_down_reason": vpn_session["Session_Down_Reason"], "tunnels": []})
-                    #print(vpn_session)
+                    # print(vpn_session)
                     for policy in vpn_session["Policy"]:
                         tunnel.update({"uuid": policy["id"], "tunnel_status": policy["Tunnel_Status"]})
                         for local in policy["Local"]["IP_Address"]:
-                            #print(1)
+                            # print(1)
                             local_ip = dec_to_ip(local["ipv4"]) + "/" + str(local["prefix_length"])
                             tunnel.update({"local_subnet": local_ip})
                         for peer in policy["Peer"]["IP_Address"]:
-                            #print(2)
+                            # print(2)
                             peer_ip = dec_to_ip(peer["ipv4"]) + "/" + str(peer["prefix_length"])
-                            tunnel.update({"peer_subnet":peer_ip})
-                        
+                            tunnel.update({"peer_subnet": peer_ip})
+
                         tunnel.update({"tunnel_down_reason": policy["Tunnel_Down_Reason"]})
                         session["tunnels"].append(tunnel.copy())
-                    
+
                     ipsec.append(session.copy())
-        
+
         return ipsec
- 
+
     except OSError as err:
         print(err)
 
-    
-def get_diag():
 
+def get_diag():
     FILE_1 = BASE_PATH + "/edge/diagnosis"
-    diag = {"passed": [], "failed": [], "warning":[]}
+    diag = {"passed": [], "failed": [], "warning": []}
 
     try:
         with open(FILE_1, "r", encoding="UTF-8") as tfile:
@@ -594,10 +596,8 @@ def get_diag():
 
     return diag
 
-    
 
 def main():
-        
     global BUNDLE
     global BASE_PATH
 
@@ -613,7 +613,7 @@ def main():
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
     BUNDLE = args["edge_bundle"]
-    
+
     try:
         os.chdir(BUNDLE)
         BASE_PATH = os.getcwd()
@@ -635,7 +635,6 @@ def main():
     elif args["diag"]:
         format_dict_output(get_diag(), "DIAGNOSTICS")
 
-
     """
     try:
         file = tarfile.open(sys.argv[1])
@@ -649,5 +648,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    
