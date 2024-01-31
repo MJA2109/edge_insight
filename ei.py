@@ -14,6 +14,7 @@ import struct
 import pprint
 from format_ei import *
 from ast import literal_eval
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
@@ -29,6 +30,9 @@ class colours():
 
 
 DIV = "---------------------------------------------------------"
+BUNDLE = ""
+BASE_PATH = ""
+
 
 log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
 log_file = 'ei.log'
@@ -509,9 +513,9 @@ def dec_to_ip(decimal):
 def get_lbs():
     local_lb = []
 
-    PATH = BASE_PATH + "/edge/lb-stats"
+    path = BASE_PATH + "/edge/lb-stats"
 
-    with open(PATH, 'r', encoding='utf-8') as jfile:
+    with open(path, 'r', encoding='utf-8') as jfile:
         lbs = json.load(jfile)
         for lb in lbs["lbs"]:
             local_lb.append(
@@ -526,6 +530,16 @@ def get_lbs():
 
     return local_lb
 
+def get_lb_vip_count():
+
+    path = BASE_PATH + "/edge/lb-stats"
+
+    print("base", BASE_PATH)
+    print("get_lb_vip_count", path)
+    """
+    with open(path, "r", encoding='utf-8') as jfile:
+        lbs = json.load(jfile)
+   """
 
 def get_ipsec_vpn():
     FILE_1 = BASE_PATH + "/edge/vpn-session"
@@ -598,6 +612,7 @@ def get_diag():
 
 
 def main():
+
     global BUNDLE
     global BASE_PATH
 
@@ -615,11 +630,13 @@ def main():
     BUNDLE = args["edge_bundle"]
 
     try:
-        os.chdir(BUNDLE)
-        BASE_PATH = os.getcwd()
+        PATH = Path(os.getcwd())
+        BASE_PATH = os.path.join(PATH, BUNDLE)
+
     except os.error as err:
         print(colours.warning + "Unable to access bundle:" + colours.endc, err)
 
+    print("affter")
     if args["summary"]:
         format_dict_output(get_edge_summary(), "EDGE SUMMARY")
     elif args["performance"]:
@@ -648,3 +665,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
