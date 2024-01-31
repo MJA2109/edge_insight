@@ -14,7 +14,6 @@ import struct
 import pprint
 from format_ei import *
 from ast import literal_eval
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
@@ -630,7 +629,7 @@ def main():
     BUNDLE = args["edge_bundle"]
 
     try:
-        PATH = Path(os.getcwd())
+        PATH = os.getcwd()
         BASE_PATH = os.path.join(PATH, BUNDLE)
 
     except os.error as err:
